@@ -1,3 +1,5 @@
+import type { TerrainKind } from '../lib/noise';
+
 export type SignalStatus = 'durmiente' | 'silencioso' | 'perdido';
 
 export interface Source {
@@ -9,6 +11,10 @@ export type GameId = 'descent' | 'energy';
 
 export interface Artifact {
   id: string;
+  /** relieve del suelo: el museo y las entrevistas usan el mismo tipo */
+  terrain: TerrainKind;
+  /** semilla del ruido del terreno, fija entre renders */
+  seed: number;
   index: string;
   name: string;
   alias: string;
@@ -51,6 +57,8 @@ export interface Artifact {
 export const ARTIFACTS: Artifact[] = [
   {
     id: 'eagle',
+    terrain: 'luna',
+    seed: 13,
     index: '01',
     name: 'Eagle',
     alias: 'Apollo Lunar Module',
@@ -101,6 +109,8 @@ export const ARTIFACTS: Artifact[] = [
   },
   {
     id: 'opportunity',
+    terrain: 'marte',
+    seed: 41,
     index: '02',
     name: 'Opportunity',
     alias: 'MER-B',
@@ -153,6 +163,8 @@ export const ARTIFACTS: Artifact[] = [
   },
   {
     id: 'ingenuity',
+    terrain: 'marte',
+    seed: 67,
     index: '03',
     name: 'Ingenuity',
     alias: 'Mars Helicopter',
@@ -204,6 +216,8 @@ export const ARTIFACTS: Artifact[] = [
   },
   {
     id: 'dawn',
+    terrain: 'ceres',
+    seed: 97,
     index: '04',
     name: 'Dawn',
     alias: 'Dawn Mission',

@@ -4,8 +4,8 @@ import * as THREE from 'three';
 import { ARTIFACTS } from '../data/artifacts';
 import { fbm, heightAt, type TerrainKind } from '../lib/noise';
 
-const KINDS: TerrainKind[] = ['luna', 'marte', 'marte', 'ceres'];
-const SEEDS = [13, 41, 67, 97];
+const KINDS: TerrainKind[] = ARTIFACTS.map((a) => a.terrain);
+const SEEDS = ARTIFACTS.map((a) => a.seed);
 const ZS = ARTIFACTS.map((a) => a.station[2]);
 const GROUND = ARTIFACTS.map((a) => new THREE.Color(a.palette.ground));
 const ROCK = ARTIFACTS.map((a) => new THREE.Color(a.palette.rock));

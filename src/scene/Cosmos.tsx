@@ -3,27 +3,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { Stars } from '@react-three/drei';
 import * as THREE from 'three';
 import { ARTIFACTS } from '../data/artifacts';
-
-const VERT = /* glsl */ `
-  varying vec3 vDir;
-  void main() {
-    vDir = normalize(position);
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-  }
-`;
-
-const FRAG = /* glsl */ `
-  uniform vec3 uTop;
-  uniform vec3 uBottom;
-  varying vec3 vDir;
-  void main() {
-    float h = clamp((vDir.y + 0.35) * 0.5 + 0.5, 0.0, 1.0);
-    vec3 col = mix(uBottom, uTop, pow(h, 0.85));
-    float dither = (fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453) - 0.5) / 255.0;
-    gl_FragColor = vec4(col + dither, 1.0);
-    #include <colorspace_fragment>
-  }
-`;
+import { SKY_FRAG, SKY_VERT } from './skyShader';
 
 const TOP = ARTIFACTS.map((a) => new THREE.Color(a.palette.top));
 const BOTTOM = ARTIFACTS.map((a) => new THREE.Color(a.palette.bottom));
@@ -71,8 +51,8 @@ export function Cosmos({ progress }: { progress: React.RefObject<number> }) {
         <mesh>
           <sphereGeometry args={[180, 32, 20]} />
           <shaderMaterial
-            vertexShader={VERT}
-            fragmentShader={FRAG}
+            vertexShader={SKY_VERT}
+            fragmentShader={SKY_FRAG}
             uniforms={uniforms}
             side={THREE.BackSide}
             depthWrite={false}

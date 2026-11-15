@@ -57,7 +57,7 @@ Sin desbordamiento horizontal en ninguno de los dos (`scrollWidth <= innerWidth`
 | Comprobación | Escritorio | Móvil (390×844) |
 |---|---|---|
 | Se abre desde la ficha | ✓ | ✓ |
-| Retrato (placeholder SVG) | ✓ | ✓ |
+| Retrato (WebP generado) | ✓ | ✓ |
 | 7 opciones visibles | ✓ (2 columnas) | ✓ (1 columna) |
 | Señal 4 → 3 → 2 → 1 → 0 | ✓ | ✓ |
 | Opciones 7 → 6 → 5 → 4 | ✓ | ✓ |

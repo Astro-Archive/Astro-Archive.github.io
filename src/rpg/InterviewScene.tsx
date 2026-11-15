@@ -1,8 +1,11 @@
 import { useMemo, useRef } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Sparkles } from '@react-three/drei';
+import { Sparkles, Stars } from '@react-three/drei';
 import * as THREE from 'three';
 import { ArtifactModel } from '../scene/ArtifactModel';
+import { TerrainPatch } from '../scene/TerrainPatch';
+import { SkyDome } from '../scene/SkyDome';
+import { useBlobShadowTexture } from '../scene/blobShadow';
 import type { Artifact } from '../data/artifacts';
 
 interface SceneProps {
@@ -19,6 +22,7 @@ function Diorama({ artifact, alive, speaking, reduced }: SceneProps) {
   const ring = useRef<THREE.Mesh>(null);
   const camera = useThree((s) => s.camera);
   const charge = useRef(0);
+  const shadowMap = useBlobShadowTexture();
 
   useFrame((state, delta) => {
     const t = state.clock.elapsedTime;
@@ -54,17 +58,29 @@ function Diorama({ artifact, alive, speaking, reduced }: SceneProps) {
 
   return (
     <>
-      <color attach="background" args={['#06080f']} />
-      <fog attach="fog" args={['#06080f', 14, 34]} />
+      <color attach="background" args={[artifact.palette.top]} />
+      <fog attach="fog" args={[artifact.palette.bottom, 14, 34]} />
+      <SkyDome top={artifact.palette.top} bottom={artifact.palette.bottom} />
 
+      {artifact.palette.stars && (
+        <Stars radius={80} depth={30} count={500} factor={2.6} saturation={0.2} fade speed={0.2} />
+      )}
       <ambientLight intensity={0.4} />
       <hemisphereLight args={['#8fa6c8', '#241a12', 0.7]} />
       <directionalLight position={[5, 8, 6]} intensity={2.2} color="#fff1da" />
       <directionalLight position={[-6, 3, -4]} intensity={0.8} color="#6f8fd0" />
 
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]}>
-        <circleGeometry args={[26, 64]} />
-        <meshStandardMaterial color={artifact.palette.ground} roughness={0.98} flatShading />
+      <TerrainPatch
+        kind={artifact.terrain}
+        seed={artifact.seed}
+        ground={artifact.palette.ground}
+        rock={artifact.palette.rock}
+      />
+
+      {/* sombra de contacto: asienta el artefacto sobre el relieve */}
+      <mesh position={[0, 0.015, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[5.6, 5.6]} />
+        <meshBasicMaterial map={shadowMap} transparent opacity={0.45} depthWrite={false} />
       </mesh>
 
       <mesh ref={ring} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>

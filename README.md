@@ -100,8 +100,8 @@ entrada en el **catálogo de memoria**, que persiste entre visitas (`localStorag
 
 - 4 entrevistas × 7 preguntas = 28 respuestas, todas con fuente en `docs/DATOS.md`.
 - 16 fragmentos de catálogo, 4 por artefacto.
-- Los retratos son placeholders SVG hasta que se reemplacen por los PNG generados con IA:
-  el componente intenta `portrait-<id>.png` y cae al SVG sin tocar código.
+- Los retratos son WebP generados con IA (masters JPG en `assets/retratos-fuente/`):
+  el componente intenta `portrait-<id>.webp`, luego `.png` y cae al SVG sin tocar código.
 - Plan completo, dirección de arte y prompts: `docs/RPG.md`.
 
 ---
@@ -139,7 +139,7 @@ docs/GUION-VIDEO.md       guion del video de 100 s
 public/models/*.glb       4 modelos de NASA 3D Resources
 scripts/check.mjs         verificación con Chromium headless (capturas + errores)
 src/
-  data/artifacts.ts       todo el contenido: textos, fuentes, paletas, cámaras
+  data/artifacts.ts       todo el contenido: textos, fuentes, paletas, terreno y cámaras
   lib/noise.ts            ruido de valor + fBm + cráteres
   lib/useScroll.ts        progreso de scroll, reduced-motion, detección de WebGL
   rpg/
@@ -156,7 +156,10 @@ src/
     Experience.tsx        contenido del canvas
     CameraRig.tsx         cámara sobre curva CatmullRom
     Cosmos.tsx            cielo, estrellas, niebla
+    SkyDome.tsx           cielo degradado de una sola estación
+    skyShader.ts          shader compartido del cielo
     World.tsx             terreno continuo + rocas
+    TerrainPatch.tsx      relieve acotado para el diorama de entrevista
     Station.tsx           artefacto, anillo, sombra, polvo
     ArtifactModel.tsx     carga y normalización de GLB
   ui/

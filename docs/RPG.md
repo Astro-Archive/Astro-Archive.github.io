@@ -93,11 +93,11 @@ Los retratos los genera el equipo con IA. Especificación **no negociable** para
 | Fondo | `#0A0E18` plano, sin viñeta ni marco | El CSS lo funde con una máscara radial |
 | Dirección | Mirando ligeramente a la **derecha** | El retrato va a la izquierda y mira al texto |
 
-**Entrega:** `public/rpg/portrait-{eagle|opportunity|ingenuity|dawn|archivist}.png`
-(o `.webp`), ≤180 KB cada uno.
+**Entrega:** `public/rpg/portrait-{eagle|opportunity|ingenuity|dawn|archivist}.webp`
+(o `.png`), ≤180 KB cada uno. Los masters en JPG quedan en `assets/retratos-fuente/`.
 
-**Mientras no existan:** hay placeholders SVG generados con la paleta del proyecto. El
-componente usa el PNG si existe y cae al SVG si falla (`onError`), sin romper nada.
+**Fallback:** si falta el WebP se prueba el PNG, luego el SVG placeholder y, por
+último, un monograma (`onError`), sin romper nada.
 
 ### Bloque de estilo (idéntico en los cinco prompts)
 

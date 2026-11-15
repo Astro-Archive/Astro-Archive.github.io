@@ -18,11 +18,6 @@ fondo limpio, composición vertical para tarjetas de diálogo.
 - Crear también una hoja de expresiones: neutral, alegría, duda, sorpresa, preocupación
   y celebración.
 
-**Prompt negativo común:** texto ilegible, logos, marcas de agua, armas, violencia,
-terror, realismo fotográfico, proporciones humanas extrañas, dedos deformes, manos
-extra, ojos asimétricos, fondo saturado, colores neón excesivos, estética oscura para
-terror, apariencia militar.
-
 ---
 
 ## Personajes principales
@@ -38,15 +33,6 @@ respuestas. Nunca inventa un dato: cuando algo es ficción lo marca como recreac
 **Diseño:** pequeño robot flotante de exploración, cuerpo ovalado blanco y gris,
 pantalla circular turquesa como rostro, una antena corta, dos brazos mecánicos
 flexibles y una luz naranja de estado. No debe parecer un rover específico de NASA.
-
-**Prompt de imagen:**
-
-> Friendly fictional educational space robot guide, small floating oval exploration
-> robot, white and graphite matte shell, circular turquoise face display, one short
-> antenna, two expressive flexible mechanical arms, small orange status light,
-> rounded low-poly 3D character, cinematic museum lighting, space education game for
-> ages 10-14, clean dark blue background, full body, three-quarter view, highly
-> readable silhouette, no logos, no text
 
 **Uso en UI:** avatar principal del textbox, icono de ayuda, narrador de objetivos y
 feedback del quiz.
@@ -65,14 +51,6 @@ algo y volver a intentarlo.
 instrumentos pequeña, visor levantado, libreta holográfica y botas robustas. No usar
 uniformes ni insignias reales.
 
-**Prompt de imagen:**
-
-> Curious teenage fictional space explorer, orange and deep blue educational
-> exploration suit, small instrument backpack, raised transparent visor, holographic
-> notebook, sturdy boots, friendly determined expression, stylized low-poly 3D
-> character, soft cinematic lighting, space museum adventure game, full body,
-> three-quarter view, clean dark background, no logos, no text
-
 **Uso en guion:** protagonista seleccionable o voz de las preguntas del jugador.
 
 ---
@@ -87,14 +65,6 @@ como una transmisión real del módulo.
 **Diseño:** entidad holográfica inspirada en una brújula lunar, cuerpo geométrico
 plateado, pequeños fragmentos orbitando a su alrededor, luz blanca y dorada, capa
 visual de polvo lunar. No representar a una persona histórica.
-
-**Prompt de imagen:**
-
-> Fictional lunar memory guide, elegant geometric silver holographic character,
-> compass-inspired body, small moon dust particles and geometric fragments orbiting
-> around it, soft white and golden light, calm intelligent expression, stylized
-> low-poly 3D character, educational space exploration game, lunar surface color
-> palette, full body, three-quarter view, no historical person, no logos, no text
 
 **Uso en guion:** aparece cerca del Eagle para explicar gravedad, etapa de descenso,
 retrorreflector y legado científico.
@@ -112,14 +82,6 @@ Marte en una oportunidad para aprender.
 cámara frontal expresiva y una antena doblada por el viento. Debe ser original y no
 copiar la silueta exacta de Opportunity.
 
-**Prompt de imagen:**
-
-> Friendly fictional Mars mission chronicler robot, compact red and copper exploration
-> robot, small wheels, expressive camera lens face, slightly bent antenna, dust on
-> matte panels, optimistic personality, stylized low-poly 3D character, Mars rust
-> palette, educational game for young explorers, full body, three-quarter view,
-> cinematic soft light, no NASA logo, no text
-
 **Uso en guion:** introduce agua antigua, tormentas de polvo, energía solar y
 adaptación de instrumentos.
 
@@ -135,14 +97,6 @@ Sistema Solar.
 **Diseño:** pequeño avatar robótico con dos paneles estilizados como alas plegables,
 núcleo azul, halo de iones y detalles oscuros. Debe sugerir una sonda, no ser una
 réplica literal de Dawn.
-
-**Prompt de imagen:**
-
-> Fictional deep-space ion-propulsion guide, small elegant robotic avatar with two
-> folded solar-panel wings, deep blue glowing core, subtle ion halo, graphite and
-> cobalt materials, thoughtful friendly expression, stylized low-poly 3D character,
-> asteroid belt educational adventure, cinematic starfield lighting, full body,
-> three-quarter view, no logos, no text
 
 **Uso en guion:** explica propulsión iónica, órbitas, Vesta, Ceres y cómo una misión
 puede continuar después de perder la señal.
@@ -318,17 +272,3 @@ descenso; la etapa de ascenso despegó después de la misión.”
 3. El diálogo explica que el empuje es pequeño, pero puede mantenerse durante años.
 4. El quiz pregunta qué hizo única a Dawn: orbitar dos cuerpos distintos.
 5. Insignia: **Cartógrafo del cinturón**.
-
----
-
-## Recomendación de generación
-
-Generar primero:
-
-1. ECHO-11, porque será reutilizable en todas las misiones.
-2. SABLE, porque corresponde al MVP de Eagle.
-3. LUMA, si se quiere representar explícitamente al jugador.
-4. RUST e ION para preparar la expansión de Marte y Ceres.
-
-Para cada personaje generar: retrato de diálogo, cuerpo completo, tres cuartos,
-seis expresiones, pose de saludo, pose de explicación y pose de celebración.

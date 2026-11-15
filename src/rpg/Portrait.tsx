@@ -2,8 +2,9 @@ import { useState } from 'react';
 
 /**
  * Retratos del RPG.
- * Se intenta el PNG generado con IA; si no existe, el SVG placeholder; si tampoco,
- * un monograma. Para cambiar el arte basta con dejar `portrait-<id>.png` en `public/rpg/`.
+ * Se intenta primero el WebP generado con IA; si no existe, el PNG, luego el SVG
+ * placeholder y, como último recurso, un monograma. Para cambiar el arte basta con
+ * dejar `portrait-<id>.webp` en `public/rpg/`.
  */
 
 const MONOGRAM: Record<string, string> = {
@@ -14,7 +15,14 @@ const MONOGRAM: Record<string, string> = {
   dawn: 'D',
 };
 
-type Stage = 'png' | 'svg' | 'mono';
+type Stage = 'webp' | 'png' | 'svg' | 'mono';
+
+const NEXT_STAGE: Record<Stage, Stage> = {
+  webp: 'png',
+  png: 'svg',
+  svg: 'mono',
+  mono: 'mono',
+};
 
 interface PortraitProps {
   id: string;
@@ -23,9 +31,9 @@ interface PortraitProps {
 }
 
 export function Portrait({ id, name, speaking = false }: PortraitProps) {
-  const [stage, setStage] = useState<Stage>('png');
+  const [stage, setStage] = useState<Stage>('webp');
 
-  const src = stage === 'png' ? `rpg/portrait-${id}.png` : `rpg/portrait-${id}.svg`;
+  const src = `rpg/portrait-${id}.${stage}`;
 
   return (
     <figure className={`portrait ${speaking ? 'is-speaking' : ''}`}>
@@ -40,7 +48,7 @@ export function Portrait({ id, name, speaking = false }: PortraitProps) {
           alt={`Retrato de ${name}`}
           loading="lazy"
           decoding="async"
-          onError={() => setStage(stage === 'png' ? 'svg' : 'mono')}
+          onError={() => setStage(NEXT_STAGE[stage])}
         />
       )}
       <figcaption className="visually-hidden">{name}</figcaption>

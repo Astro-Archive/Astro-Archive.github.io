@@ -108,6 +108,12 @@ body {
   pointer-events: auto;
 }
 
+.hud-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .brand {
   display: grid;
   grid-template-columns: 8px auto;
@@ -152,11 +158,15 @@ body {
 }
 
 .ghost-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-family: var(--mono);
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.14em;
   color: var(--ink);
+  text-decoration: none;
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid var(--line);
   border-radius: 999px;
@@ -1160,6 +1170,25 @@ body {
 @media (max-width: 560px) {
   .brand-sub {
     display: none;
+  }
+
+  .hud-actions {
+    gap: 6px;
+  }
+
+  .hud-actions .ghost-button {
+    padding: 8px 10px;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+  }
+
+  .hud-external-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 
   .card {

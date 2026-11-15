@@ -2,9 +2,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 /**
- * Genera los retratos de relleno del RPG.
- * Se reemplazan por los PNG generados con IA sin tocar código:
- * el componente intenta `portrait-<id>.png` y cae a estos SVG si no existe.
+ * Genera los retratos de relleno del RPG (solo si faltan los SVG).
+ * El arte real se sirve como `portrait-<id>.webp`: el componente intenta webp,
+ * luego png, luego estos SVG y, por último, un monograma.
  */
 
 const OUT = 'public/rpg';
@@ -35,33 +35,5 @@ for (const p of PORTRAITS) {
 `;
   fs.writeFileSync(path.join(OUT, `portrait-${p.id}.svg`), svg);
 }
-
-fs.writeFileSync(
-  path.join(OUT, 'README.md'),
-  `# Retratos del RPG
-
-Estos SVG son **placeholders**. Para reemplazarlos, deja los archivos con este nombre:
-
-\`\`\`
-portrait-archivist.png   (o .webp)
-portrait-eagle.png
-portrait-opportunity.png
-portrait-ingenuity.png
-portrait-dawn.png
-\`\`\`
-
-El componente intenta el \`.png\` primero y, si falla, cae al \`.svg\`. No hay que tocar código.
-
-## Especificación
-
-- 1:1, mínimo 1024×1024
-- Fondo \`#0A0E18\` plano, sin viñeta ni marco
-- Sujeto centrado, 60 % de la altura, ojos a 1/3 desde arriba
-- Mirando ligeramente a la derecha
-- ≤180 KB por imagen
-
-Los prompts completos están en \`docs/RPG.md\`, sección 5.
-`,
-);
 
 console.log(`listo: ${PORTRAITS.length} placeholders en ${OUT}`);
