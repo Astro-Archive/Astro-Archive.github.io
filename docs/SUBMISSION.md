@@ -72,7 +72,8 @@ la **rescata**.
 
 El epílogo conecta el pasado con el presente: en 1969 dejamos un módulo porque no podía
 volver; en 2021 dejamos tubos de muestra a propósito, para que alguien vuelva a buscarlos.
-Lo que separa la basura del patrimonio es si alguien recuerda dónde está.
+Lo que convierte estos objetos en historia no es el material: es que alguien recuerde
+dónde están.
 
 ### Por qué funciona para 10-14 años
 

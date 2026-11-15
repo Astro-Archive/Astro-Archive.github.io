@@ -59,7 +59,12 @@ export function useScroll(count: number): ScrollState {
   const scaled = progress * steps;
   const index = scaled - HERO_STEP;
   const station = Math.min(count - 1, Math.max(0, Math.round(index)));
-  const card = Math.abs(index - station) < 0.22 ? station : null;
+  // La última ficha se queda visible hasta el epílogo: si no, su ventana
+  // (centro de la estación ±0,22) se cierra antes de poder leerla.
+  const last = count - 1;
+  const nearStation = Math.abs(index - station) < 0.22;
+  const holdingLast = index >= last - 0.22 && index <= count;
+  const card = nearStation || holdingLast ? station : null;
 
   const jump = (progressTarget: number) => {
     const max = document.documentElement.scrollHeight - window.innerHeight;

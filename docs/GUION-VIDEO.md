@@ -48,7 +48,7 @@
 | **1:04–1:06** | Scroll de vuelta a **Eagle**. | *(silencio)* |
 | **1:06–1:18** | Se abre el minijuego **Descenso lunar**. Se pulsa MOTOR. | "Pero contar no es lo mismo que operar. En el capítulo de Eagle puedes pilotar el descenso: gravedad lunar real, combustible finito. Al aterrizar lo entiendes de golpe: aunque te sobre combustible, **no hay forma de volver a subir**. Por eso esa máquina se quedó ahí." |
 | **1:18–1:22** | Se cierra el juego. Scroll al **epílogo**. | *(silencio)* |
-| **1:22–1:34** | Epílogo. Aparecen las tres cifras: 4, 3, 55. | "En 1969 dejamos un módulo porque no podía volver. En 2021 dejamos tubos de muestra en Marte **a propósito**, para que alguien vuelva a buscarlos. Lo que separa la basura del patrimonio no es el material: es si alguien recuerda dónde está." |
+| **1:22–1:34** | Epílogo. Aparecen las tres cifras: 4, 3, 55. | "En 1969 dejamos un módulo porque no podía volver. En 2021 dejamos tubos de muestra en Marte **a propósito**, para que alguien vuelva a buscarlos. Lo que convierte estos objetos en historia no es el material: es que alguien recuerde dónde están." |
 | **1:34–1:40** | Botón **Leer sin 3D**. Se ve el artículo con las fuentes. | "Modelos: NASA 3D Resources. Datos: NSSDCA. Y una regla: si un dato no tiene fuente, no entra." |
 | **1:40** | Fin. | *(música sube y corta)* |
 

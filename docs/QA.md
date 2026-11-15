@@ -28,6 +28,10 @@ El render por software va a ~1,7 fps: sirve para verificar corrección, **no ren
 
 Sin desbordamiento horizontal en ninguno de los dos (`scrollWidth <= innerWidth`).
 
+`scripts/smoke.mjs` comprueba además que la ficha de cada estación esté realmente
+visible (`is-visible`) al llegar a su paso de scroll. La ficha de Dawn se mantiene
+hasta el epílogo: antes, el umbral del epílogo la ocultaba antes de poder leerla.
+
 ## 3. Modo lectura
 
 `check.mjs` abre el modo lectura y cuenta capítulos.

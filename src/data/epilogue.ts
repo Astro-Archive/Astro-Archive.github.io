@@ -1,8 +1,8 @@
 export const EPILOGUE = {
-  title: 'La diferencia entre basura y patrimonio es la memoria.',
+  title: 'Lo que queda también cuenta la historia.',
   paragraphs: [
     'En 1969 dejamos un módulo lunar en la Luna porque no podía volver. En 2021 dejamos tubos de muestra en Marte a propósito, para que alguien vuelva a buscarlos. Si la misión de retorno sale bien, serán los primeros objetos fabricados por humanos recogidos de otro planeta.',
-    'Lo que separa una cosa de la otra no es el material ni la tecnología. Es si alguien sabe dónde está y por qué se dejó ahí.',
+    'Lo que convierte estos objetos en historia no es el material ni la tecnología: es que alguien sepa dónde están y por qué se dejaron ahí.',
   ],
   stats: [
     { value: '4', label: 'máquinas contadas' },
