@@ -1,10 +1,16 @@
-import type { Artifact } from '../data/artifacts';
+import type { Artifact, GameId } from '../data/artifacts';
 import { SignalMeter } from './SignalMeter';
 
 interface ChapterCardProps {
   artifact: Artifact;
   visible: boolean;
+  onPlay: (game: GameId) => void;
 }
+
+const GAME_LABEL: Record<GameId, { title: string; cta: string }> = {
+  descent: { title: 'Pilota el descenso', cta: 'Intentar el aterrizaje' },
+  energy: { title: 'El último invierno', cta: 'Repartir la energía' },
+};
 
 const BEATS: Array<{ key: keyof Artifact['facts']; label: string }> = [
   { key: 'what', label: 'Qué es' },
@@ -13,7 +19,7 @@ const BEATS: Array<{ key: keyof Artifact['facts']; label: string }> = [
   { key: 'now', label: 'Qué es ahora' },
 ];
 
-export function ChapterCard({ artifact, visible }: ChapterCardProps) {
+export function ChapterCard({ artifact, visible, onPlay }: ChapterCardProps) {
   return (
     <aside
       className={`card ${visible ? 'is-visible' : ''}`}
@@ -36,6 +42,16 @@ export function ChapterCard({ artifact, visible }: ChapterCardProps) {
 
         <SignalMeter status={artifact.status} />
         <p className="card-status">{artifact.statusLabel}</p>
+
+        {artifact.game && (
+          <div className="play-block">
+            <span className="play-tag">Minijuego · 20 segundos</span>
+            <p className="play-title">{GAME_LABEL[artifact.game].title}</p>
+            <button type="button" className="play-button" onClick={() => onPlay(artifact.game!)}>
+              {GAME_LABEL[artifact.game].cta}
+            </button>
+          </div>
+        )}
 
         <dl className="facts">
           {BEATS.map((beat) => (

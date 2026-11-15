@@ -5,6 +5,8 @@ export interface Source {
   url: string;
 }
 
+export type GameId = 'descent' | 'energy';
+
 export interface Artifact {
   id: string;
   index: string;
@@ -16,6 +18,7 @@ export interface Artifact {
   status: SignalStatus;
   statusLabel: string;
   model: string;
+  game?: GameId;
   /** tamaño de la dimensión mayor, en unidades de mundo */
   fit: number;
   /** rotación de presentación en radianes */
@@ -57,6 +60,7 @@ export const ARTIFACTS: Artifact[] = [
     status: 'durmiente',
     statusLabel: 'Durmiente — una ventana sigue respondiendo',
     model: 'models/lunar-module.glb',
+    game: 'descent',
     fit: 6.2,
     yaw: 0.6,
     station: [0, 0, 0],
@@ -106,6 +110,7 @@ export const ARTIFACTS: Artifact[] = [
     status: 'silencioso',
     statusLabel: 'Silenciosa desde junio de 2018',
     model: 'models/opportunity.glb',
+    game: 'energy',
     fit: 3.4,
     yaw: -0.9,
     station: [0, 0, -40],

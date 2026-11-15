@@ -1,15 +1,32 @@
 import { useEffect, useRef, useState } from 'react';
 
+/**
+ * Mapa del recorrido:
+ *   índice -1 ...... portada
+ *   índice  0..3 ... estaciones
+ *   índice  4 ...... epílogo
+ *
+ * Cada paso ocupa una pantalla de scroll, así la portada y el epílogo no
+ * se comen las estaciones (antes, la tarjeta de Eagle era inalcanzable).
+ */
+export const HERO_STEP = 1;
+
+export function cameraT(progress: number, count: number): number {
+  const steps = count + 1;
+  return Math.min(1, Math.max(0, (progress * steps - HERO_STEP) / (count - 1)));
+}
+
 export interface ScrollState {
   /** progreso 0..1, para el render loop (sin re-render) */
   ref: React.RefObject<number>;
   /** progreso 0..1, con re-render */
   progress: number;
-  /** índice de la estación más cercana */
+  /** posición en pasos: -1 portada, 0..n-1 estaciones, n epílogo */
+  scaled: number;
   station: number;
-  /** índice de la estación cuya tarjeta debe verse, o null */
   card: number | null;
   goTo: (index: number) => void;
+  goEnd: () => void;
 }
 
 export function useScroll(count: number): ScrollState {
@@ -38,17 +55,21 @@ export function useScroll(count: number): ScrollState {
     };
   }, []);
 
-  const scaled = progress * (count - 1);
-  const station = Math.round(scaled);
-  const card = Math.abs(scaled - station) < 0.18 ? station : null;
+  const steps = count + 1;
+  const scaled = progress * steps;
+  const index = scaled - HERO_STEP;
+  const station = Math.min(count - 1, Math.max(0, Math.round(index)));
+  const card = Math.abs(index - station) < 0.22 ? station : null;
 
-  const goTo = (index: number) => {
+  const jump = (progressTarget: number) => {
     const max = document.documentElement.scrollHeight - window.innerHeight;
-    const top = ((max * index) / (count - 1)) | 0;
-    window.scrollTo({ top, behavior: 'smooth' });
+    window.scrollTo({ top: Math.round(max * progressTarget), behavior: 'smooth' });
   };
 
-  return { ref, progress, station, card, goTo };
+  const goTo = (stationIndex: number) => jump((stationIndex + HERO_STEP) / steps);
+  const goEnd = () => jump(1);
+
+  return { ref, progress, scaled, station, card, goTo, goEnd };
 }
 
 export function usePrefersReducedMotion(): boolean {

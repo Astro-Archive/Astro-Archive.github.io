@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { ARTIFACTS } from '../data/artifacts';
+import { cameraT } from '../lib/useScroll';
 
 interface CameraRigProps {
   progress: React.RefObject<number>;
@@ -50,7 +51,7 @@ export function CameraRig({ progress, reduced }: CameraRigProps) {
   }, []);
 
   useFrame((_, delta) => {
-    const t = Math.min(1, Math.max(0, progress.current ?? 0));
+    const t = cameraT(progress.current ?? 0, ARTIFACTS.length);
 
     positionCurve.getPoint(t, tmpPos);
     targetCurve.getPoint(t, tmpTarget);

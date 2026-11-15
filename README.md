@@ -78,6 +78,19 @@ En Netlify, define `SITE_URL` en las variables de entorno del sitio.
 - **Modo lectura** (arriba a la derecha): oculta el 3D y muestra todo como artículo.
 - **Esc** cierra el modo lectura.
 
+### Minijuegos
+
+Dos capítulos incluyen una mecánica de veinte segundos que se abre desde la ficha del
+artefacto y devuelve al museo al terminar.
+
+| Juego | Artefacto | Qué enseña |
+|---|---|---|
+| **Descenso lunar** | Eagle | Que la etapa de descenso no podía volver a la órbita: aunque te sobre combustible, necesitas otro motor y otro tanque. |
+| **El último invierno** | Opportunity | Que la tormenta de 2018 no fue una avería, sino un presupuesto de energía que se agotó. No se puede ganar; se juega cuánta ciencia llega a casa. |
+
+Ambos usan cifras reales (18.184 lb de propelente, 770 lb al aterrizar, 468 → 22 Wh) y
+están documentados en `docs/DATOS.md`.
+
 ---
 
 ## Stack
@@ -113,6 +126,10 @@ src/
   data/artifacts.ts       todo el contenido: textos, fuentes, paletas, cámaras
   lib/noise.ts            ruido de valor + fBm + cráteres
   lib/useScroll.ts        progreso de scroll, reduced-motion, detección de WebGL
+  game/
+    DescentGame.tsx       minijuego de descenso (overlay 3D)
+    descentPhysics.ts     física pura, compartida con el script de balance
+    EnergyGame.tsx        minijuego de presupuesto de energía
   scene/
     Experience.tsx        contenido del canvas
     CameraRig.tsx         cámara sobre curva CatmullRom
@@ -124,6 +141,7 @@ src/
     ChapterCard.tsx       tarjeta del capítulo
     Timeline.tsx          navegación inferior
     ReadingMode.tsx       versión artículo, sin 3D
+    Epilogue.tsx          cierre: lo que estamos dejando ahora
     SignalMeter.tsx       medidor de señal
 ```
 

@@ -257,3 +257,26 @@ Audio narrado, bilingüe, física, VR, tests automatizados, más de cuatro artef
 2. **Video narrado de 90 s** — ver `docs/GUION-VIDEO.md`. El archivo
    `docs/still-listening-demo.mp4` es material de apoyo de 10,6 s, no la presentación.
 3. Probar en un móvil real (la verificación fue con Chromium emulando 390×844).
+
+### Ampliación: mecánicas y cierre
+
+Después de la primera versión se añadió lo que faltaba para el criterio más débil del
+brief: *"showing your audience how these missions operated rather than listing facts"*.
+
+| Añadido | Criterio que ataca |
+|---|---|
+| **Minijuego de descenso** (Eagle) | Operar la máquina, no leerla |
+| **Minijuego de energía** (Opportunity) | Entender el fallo como presupuesto, no como accidente |
+| **Epílogo** | Impacto: conectar 1969 con el retorno de muestras de Marte |
+| **Remapeo del scroll a 6 pasos** | Bug: la tarjeta de Eagle era visible solo en el 1,5 % del recorrido |
+
+La física del descenso vive en `src/game/descentPhysics.ts`, un módulo puro compartido con
+`scripts/balance.ts`. Ese script simula ocho estrategias para comprobar que el juego se
+puede ganar y que las malas decisiones fallan. Sin él, los primeros números hacían el
+juego **imposible de ganar**.
+
+### Pendiente al cierre (actualizado)
+
+1. **Deploy** de `dist/` para tener URL pública.
+2. **Video narrado de 90 s** — ver `docs/GUION-VIDEO.md`.
+3. Probar en un móvil real.

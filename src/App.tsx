@@ -1,16 +1,21 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { useProgress } from '@react-three/drei';
-import { ARTIFACTS, ARTIFACT_COUNT } from './data/artifacts';
+import { ARTIFACTS, ARTIFACT_COUNT, type GameId } from './data/artifacts';
 import { Experience } from './scene/Experience';
-import { usePrefersReducedMotion, useScroll, hasWebGL } from './lib/useScroll';
+import { cameraT, usePrefersReducedMotion, useScroll, hasWebGL } from './lib/useScroll';
 import { ChapterCard } from './ui/ChapterCard';
 import { Timeline } from './ui/Timeline';
 import { ReadingMode } from './ui/ReadingMode';
 import { Loader } from './ui/Loader';
+import { Epilogue } from './ui/Epilogue';
+import { DescentGame } from './game/DescentGame';
+import { EnergyGame } from './game/EnergyGame';
+
+const EPILOGUE_AT = 3.75; // índice de paso, no progreso
 
 export default function App() {
-  const { ref, progress, station, card, goTo } = useScroll(ARTIFACT_COUNT);
+  const { ref, progress, scaled, station, card, goTo } = useScroll(ARTIFACT_COUNT);
   const prefersReduced = usePrefersReducedMotion();
   // ?capture fuerza cámara seca: sirve para grabar frames deterministas.
   const capture = typeof window !== 'undefined' && window.location.search.includes('capture');
@@ -19,6 +24,7 @@ export default function App() {
 
   const [reading, setReading] = useState(() => !hasWebGL());
   const [ready, setReady] = useState(false);
+  const [game, setGame] = useState<GameId | null>(null);
 
   // Mantiene la última tarjeta visible mientras la cámara viaja entre estaciones.
   const lastIndex = useRef(0);
@@ -36,20 +42,37 @@ export default function App() {
     return () => window.clearTimeout(timer);
   }, []);
 
+  // Bloquea el scroll del museo mientras hay un minijuego o el modo lectura abierto.
+  useEffect(() => {
+    const locked = game !== null || reading;
+    document.body.style.overflow = locked ? 'hidden' : '';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [game, reading]);
+
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setReading(false);
-      if (reading) return;
+      if (event.key === 'Escape') {
+        setReading(false);
+        setGame(null);
+      }
+      if (reading || game) return;
       if (event.key === 'ArrowRight') goTo(Math.min(ARTIFACT_COUNT - 1, station + 1));
       if (event.key === 'ArrowLeft') goTo(Math.max(0, station - 1));
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [goTo, reading, station]);
+  }, [goTo, reading, station, game]);
 
-  const heroVisible = progress < 0.045;
-  const cardVisible = card !== null && progress > 0.045 && !reading;
+  const heroVisible = scaled < 0.5;
+  const cardVisible = card !== null && scaled < EPILOGUE_AT && !reading;
+  const epilogueVisible = scaled >= EPILOGUE_AT && !reading && game === null;
   const activeArtifact = ARTIFACTS[lastIndex.current];
+
+  const restart = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   return (
     <div className="app">
@@ -71,8 +94,8 @@ export default function App() {
       </div>
 
       <div className="scroll-space" aria-hidden="true">
-        {ARTIFACTS.map((artifact) => (
-          <section key={artifact.id} className="anchor" />
+        {Array.from({ length: ARTIFACT_COUNT + 2 }).map((_, i) => (
+          <section key={i} className="anchor" />
         ))}
       </div>
 
@@ -110,17 +133,23 @@ export default function App() {
         <p className="hero-hint">Desliza para empezar el recorrido</p>
       </div>
 
-      <ChapterCard artifact={activeArtifact} visible={cardVisible} />
+      <ChapterCard artifact={activeArtifact} visible={cardVisible} onPlay={setGame} />
 
-      <Timeline station={station} progress={progress} onSelect={goTo} />
+      <Epilogue
+        visible={epilogueVisible}
+        onRestart={restart}
+        onReading={() => setReading(true)}
+      />
 
-      <footer className="credits">
-        Modelos: NASA 3D Resources · Datos: NSSDCA
-      </footer>
+      <Timeline station={station} progress={cameraT(progress, ARTIFACT_COUNT)} onSelect={goTo} />
+
+      <footer className="credits">Modelos: NASA 3D Resources · Datos: NSSDCA</footer>
 
       <Loader progress={loadProgress} done={ready} />
 
       {reading && <ReadingMode onClose={() => setReading(false)} />}
+      {game === 'descent' && <DescentGame onClose={() => setGame(null)} />}
+      {game === 'energy' && <EnergyGame onClose={() => setGame(null)} />}
     </div>
   );
 }

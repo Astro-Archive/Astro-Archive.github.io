@@ -105,3 +105,44 @@ Todos de **NASA 3D Resources** (`science.nasa.gov/3d-resources`), espejo en
 | `dawn.glb` | `3D Models/Dawn/` | 927 KB |
 
 Uso permitido con acreditación y sin sugerir endorsement de NASA.
+
+---
+
+## Minijuego: descenso lunar
+
+Simulación **simplificada**: reproduce la última fase del descenso, no la misión completa.
+La física es real; el modelo no.
+
+| Afirmación en el juego | Valor | Fuente |
+|---|---|---|
+| Propelente de la etapa de descenso cargado | 18.184 lb (6.975 de combustible + 11.209 de oxidante) | Apollo 11 Mission Report, §9.13.1 |
+| Restante al apagar el motor | **770 lb** → **4,2 %** | Apollo 11 Mission Report, §9.13.1 |
+| Vuelo disponible con ese resto | ~45 s, de los cuales ~20 s reservados para abortar | Apollo Lunar Surface Journal (análisis post-vuelo) |
+| Luz de combustible bajo | Se activó ~30 s antes de tiempo por el chapoteo del propelente (102:44:45) | Apollo Lunar Surface Journal |
+| Gravedad lunar | 1,62 m/s² | NASA |
+| Tren de aterrizaje | Diseñado para contacto suave; el juego usa 1,5 m/s como umbral | NASA, LM touchdown dynamics (NASA/SP-2013-605) |
+
+**Lo que el juego afirma y es cierto:** la etapa de descenso no podía volver a la órbita
+lunar aunque le hubiera quedado todo el combustible. El regreso usaba otro motor y otros
+tanques: la etapa de ascenso.
+
+---
+
+## Minijuego: energía de Opportunity (junio de 2018)
+
+Los vatios-hora y la opacidad atmosférica (tau) de cada sol son los reales.
+
+| Sol | Fecha | Energía | Tau |
+|---|---|---|---|
+| 5105 | 3 jun 2018 | 468 Wh | 1,0 |
+| 5106 | 4 jun 2018 | 345 Wh | 2,1 |
+| 5107 | 6 jun 2018 | 133 Wh | 3,0 |
+| 5111 | 10 jun 2018 | **22 Wh** | **10,8** (récord en Marte) |
+
+- Umbral que el equipo consideraba necesario para sobrevivir: **~100 Wh**.
+- Con 22 Wh no se enciende la antena ni se calienta la batería.
+- Fuentes: NASA/JPL, The Planetary Society (MER Update), NSSDCA, Museo de Historia Natural
+  de Nuevo México (informes de campo del equipo MER).
+
+**No se puede ganar, y es histórico:** la tormenta era mayor que cualquier presupuesto de
+energía. Lo que se juega es cuánta ciencia llega a casa antes del silencio.

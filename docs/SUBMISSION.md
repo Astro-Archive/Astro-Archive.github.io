@@ -45,6 +45,25 @@ Un **medidor de señal** (`activo → durmiente → silencioso → perdido`) rec
 experiencia como motivo visual y recuerda, sin decirlo, que estas máquinas ya no
 transmiten.
 
+### Dos minijuegos, no dos juegos
+
+El brief pide *"mostrar cómo operaban estas misiones, no enumerar datos"*. Por eso dos
+capítulos incluyen una mecánica de veinte segundos:
+
+- **Descenso lunar** (Eagle): pilotas la última fase del aterrizaje con gravedad lunar real
+  (1,62 m/s²) y combustible finito. Al terminar entiendes por qué la etapa de descenso se
+  quedó: aunque te sobre combustible, volver a la órbita necesitaba otro motor y otro tanque.
+- **El último invierno** (Opportunity): repartes los vatios-hora reales de los últimos
+  cuatro soles (468, 345, 133 y 22 Wh) entre calentar, medir y transmitir. No se puede
+  ganar: la tormenta era más grande que cualquier presupuesto. Se juega cuánta ciencia
+  llega a casa antes del silencio.
+
+### Cierre
+
+El epílogo conecta el pasado con el presente: en 1969 dejamos un módulo porque no podía
+volver; en 2021 dejamos tubos de muestra a propósito, para que alguien vuelva a buscarlos.
+Lo que separa la basura del patrimonio es si alguien recuerda dónde está.
+
 ### Por qué funciona para 10-14 años
 
 - Una idea por capítulo. Sin muros de texto.
