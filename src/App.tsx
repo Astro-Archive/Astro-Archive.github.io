@@ -17,6 +17,9 @@ import { completedInterviews, useCatalog } from './rpg/catalog';
 
 const EPILOGUE_AT = 3.75; // índice de paso, no progreso
 
+// Otro proyecto: Astro Archive, el museo 3D hermano del mismo reto.
+const OTHER_PROJECT_URL = 'https://astro-archive.github.io/astro-archive/';
+
 export default function App() {
   const { ref, progress, scaled, station, card, goTo } = useScroll(ARTIFACT_COUNT);
   const prefersReduced = usePrefersReducedMotion();
@@ -158,6 +161,16 @@ export default function App() {
           >
             {reading ? 'Ver recorrido 3D' : 'Modo lectura'}
           </button>
+          <a
+            className="ghost-button hud-external"
+            href={OTHER_PROJECT_URL}
+            target="_blank"
+            rel="noreferrer noopener"
+            aria-label="Abrir el otro proyecto"
+          >
+            <span className="hud-external-label">Otro proyecto</span>
+            <span aria-hidden="true">↗</span>
+          </a>
         </div>
       </header>
 
