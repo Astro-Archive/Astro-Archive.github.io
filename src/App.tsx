@@ -18,7 +18,7 @@ import { completedInterviews, useCatalog } from './rpg/catalog';
 const EPILOGUE_AT = 4.6; // índice de paso, no progreso: la ficha de Dawn queda legible antes
 
 // Simulador interactivo: Astro Archive, el museo 3D hermano del mismo reto.
-const OTHER_PROJECT_URL = 'https://astro-archive.github.io/astro-archive/';
+const OTHER_PROJECT_URL = 'https://astroarchive.earth/astro-archive/';
 
 export default function App() {
   const { ref, progress, scaled, station, card, goTo } = useScroll(ARTIFACT_COUNT);
