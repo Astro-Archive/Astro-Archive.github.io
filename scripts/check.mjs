@@ -31,19 +31,22 @@ async function shoot(width, height, prefix) {
   await page.screenshot({ path: `${OUT}/${prefix}-1-hero.png` });
 
   const vh = await page.evaluate(() => window.innerHeight);
-  await page.evaluate((h) => window.scrollTo(0, h), vh);
-  await new Promise((r) => setTimeout(r, 3000));
-  await page.screenshot({ path: `${OUT}/${prefix}-2-opp.png` });
-
-  await page.evaluate((h) => window.scrollTo(0, h * 2), vh);
-  await new Promise((r) => setTimeout(r, 3000));
-  await page.screenshot({ path: `${OUT}/${prefix}-3-ing.png` });
+  const titles = [];
+  for (let i = 1; i <= 4; i++) {
+    await page.evaluate((y) => window.scrollTo(0, y), vh * i);
+    await new Promise((r) => setTimeout(r, 2800));
+    titles.push(
+      await page.evaluate(() => document.querySelector('.card-title')?.textContent ?? null),
+    );
+    if (i <= 3) await page.screenshot({ path: `${OUT}/${prefix}-${i + 1}-station.png` });
+  }
 
   const state = await page.evaluate(() => ({
-    title: document.querySelector('.card-title')?.textContent ?? null,
+    titles: [],
     active: document.querySelector('.timeline-item.is-active .timeline-name')?.textContent ?? null,
     overflowX: document.documentElement.scrollWidth > window.innerWidth,
   }));
+  state.titles = titles;
 
   await page.close();
   return state;

@@ -1,6 +1,6 @@
 # Guion del video
 
-**Duración:** 90 segundos (incluye versión de 60 s al final).
+**Duración:** 1 min 40 s (incluye versión de 60 s al final).
 **Formato:** 1920×1080, 60 fps, MP4 (H.264), con subtítulos quemados.
 **Tono:** silencioso e íntimo. No es un tráiler épico: es un museo.
 
@@ -36,20 +36,21 @@
 | Tiempo | Imagen | Narración |
 |---|---|---|
 | **0:00–0:04** | Portada. Título a la izquierda, módulo lunar a la derecha. Sin movimiento. | *(solo música)* |
-| **0:04–0:14** | Portada, cámara quieta. Un zoom de entrada muy lento (2 %). | "En la Luna hay un módulo que no volvió a casa. En Marte, un rover que trabajó quince veces más de lo que le pidieron. Un helicóptero que voló setenta y dos veces. Y una nave que sigue dando vueltas a un asteroide, sin que nadie la escuche." |
+| **0:04–0:14** | Portada, cámara quieta. Zoom de entrada muy lento (2 %). | "En la Luna hay un módulo que no volvió a casa. En Marte, un rover que trabajó quince veces más de lo que le pidieron. Un helicóptero que voló setenta y dos veces. Y una nave que sigue dando vueltas a un asteroide, sin que nadie la escuche." |
 | **0:14–0:16** | Scroll hacia **Eagle**. | *(silencio)* |
 | **0:16–0:28** | Estación Eagle, tarjeta visible. | "Este es Eagle: la mitad de abajo del módulo del Apolo 11. Siete metros, quince toneladas, y una sola misión: ser el pedestal del primer paso humano. Se quedó aquí porque volver costaba demasiado. Pero dejó algo encendido: un espejo que todavía hoy devuelve los láseres que le disparamos desde la Tierra." |
 | **0:28–0:30** | Scroll hacia **Opportunity**. | *(silencio)* |
-| **0:30–0:44** | Estación Opportunity. | "Opportunity tenía que durar noventa días marcianos. Duró casi quince años. Recorrió cuarenta y cinco kilómetros buscando minerales que solo se forman en agua. En 2018 una tormenta de polvo le tapó el sol. La NASA la llamó más de mil veces. Nunca respondió." |
-| **0:44–0:46** | Scroll hacia **Ingenuity**. | *(silencio)* |
-| **0:46–0:58** | Estación Ingenuity. | "Ingenuity era un experimento: cinco vuelos y a casa, decían. Voló setenta y dos veces en una atmósfera que es el uno por ciento de la nuestra. En su último aterrizaje se rompió una pala. No se estrelló: se quedó de pie, en el cráter Jezero." |
-| **0:58–1:00** | Scroll hacia **Dawn**. | *(silencio)* |
-| **1:00–1:10** | Estación Dawn, con estrellas de fondo. | "Dawn no aterrizó en ningún sitio. Visitó Vesta, después Ceres, y se quedó orbitando. Sin combustible, sin señal, sin nadie que vaya a ir a buscarla. Sigue dando vueltas." |
-| **1:10–1:22** | Scroll al final. Timeline completa visible. | "Estas máquinas no son basura. Son la primera capa de nuestra historia en otros mundos. Por eso hicimos **Still Listening**: un museo que se recorre con el scroll, donde los datos están separados de la ficción y las fuentes están a un clic." |
-| **1:22–1:30** | Clic en **Modo lectura**. Se ve el artículo completo, con las fuentes. | "Para que la próxima generación no solo sepa qué encontramos. Sepa con qué lo encontramos. Modelos: NASA 3D Resources. Datos: NSSDCA. Y una regla: si un dato no tiene fuente, no entra." |
-| **1:30** | Fin. | *(música sube y corta)* |
-
----
+| **0:30–0:42** | Estación Opportunity. | "Opportunity tenía que durar noventa días marcianos. Duró casi quince años. Recorrió cuarenta y cinco kilómetros buscando minerales que solo se forman en agua. En 2018 una tormenta de polvo le tapó el sol. La NASA la llamó más de mil veces. Nunca respondió." |
+| **0:42–0:44** | Scroll hacia **Ingenuity**. | *(silencio)* |
+| **0:44–0:54** | Estación Ingenuity. | "Ingenuity era un experimento: cinco vuelos y a casa, decían. Voló setenta y dos veces en una atmósfera que es el uno por ciento de la nuestra. En su último aterrizaje se rompió una pala. No se estrelló: se quedó de pie, en el cráter Jezero." |
+| **0:54–0:56** | Scroll hacia **Dawn**. | *(silencio)* |
+| **0:56–1:04** | Estación Dawn, con estrellas. | "Dawn no aterrizó en ningún sitio. Visitó Vesta, después Ceres, y se quedó orbitando. Sin combustible, sin señal, sin nadie que vaya a ir a buscarla. Sigue dando vueltas." |
+| **1:04–1:06** | Scroll de vuelta a **Eagle**. | *(silencio)* |
+| **1:06–1:18** | Se abre el minijuego **Descenso lunar**. Se pulsa MOTOR. | "Pero contar no es lo mismo que operar. En el capítulo de Eagle puedes pilotar el descenso: gravedad lunar real, combustible finito. Al aterrizar lo entiendes de golpe: aunque te sobre combustible, **no hay forma de volver a subir**. Por eso esa máquina se quedó ahí." |
+| **1:18–1:22** | Se cierra el juego. Scroll al **epílogo**. | *(silencio)* |
+| **1:22–1:34** | Epílogo. Aparecen las tres cifras: 4, 3, 55. | "En 1969 dejamos un módulo porque no podía volver. En 2021 dejamos tubos de muestra en Marte **a propósito**, para que alguien vuelva a buscarlos. Lo que separa la basura del patrimonio no es el material: es si alguien recuerda dónde está." |
+| **1:34–1:40** | Botón **Leer sin 3D**. Se ve el artículo con las fuentes. | "Modelos: NASA 3D Resources. Datos: NSSDCA. Y una regla: si un dato no tiene fuente, no entra." |
+| **1:40** | Fin. | *(música sube y corta)* |
 
 ## Versión de 60 segundos
 

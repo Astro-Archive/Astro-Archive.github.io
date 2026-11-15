@@ -1,4 +1,5 @@
 import { ARTIFACTS } from '../data/artifacts';
+import { EPILOGUE } from '../data/epilogue';
 
 interface ReadingModeProps {
   onClose: () => void;
@@ -55,6 +56,15 @@ export function ReadingMode({ onClose }: ReadingModeProps) {
               {artifact.voice}
             </blockquote>
 
+            {artifact.game && (
+              <p className="reading-game">
+                <span className="voice-tag">Minijuego disponible en 3D</span>
+                {artifact.game === 'descent'
+                  ? 'Pilotar el descenso enseña que la etapa de descenso no podía volver a la órbita lunar: aunque sobrara combustible, el regreso necesitaba otro motor y otro tanque.'
+                  : 'Repartir la energía de los últimos soles enseña que la tormenta de 2018 no fue una avería, sino un presupuesto que se agotó: 468, 345, 133 y 22 vatios-hora.'}
+              </p>
+            )}
+
             {artifact.note && (
               <p className="note">
                 <span className="note-tag">Ojo con el dato</span>
@@ -75,6 +85,21 @@ export function ReadingMode({ onClose }: ReadingModeProps) {
             </p>
           </section>
         ))}
+
+        <section className="reading-chapter reading-epilogue">
+          <p className="reading-index">Epílogo</p>
+          <h2>{EPILOGUE.title}</h2>
+          {EPILOGUE.paragraphs.map((paragraph) => (
+            <p key={paragraph.slice(0, 24)}>{paragraph}</p>
+          ))}
+          <div className="reading-stats">
+            {EPILOGUE.stats.map((stat) => (
+              <div key={stat.label}>
+                <strong>{stat.value}</strong> {stat.label}
+              </div>
+            ))}
+          </div>
+        </section>
 
         <footer className="reading-footer">
           <p>

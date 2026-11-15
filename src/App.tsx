@@ -11,6 +11,7 @@ import { Loader } from './ui/Loader';
 import { Epilogue } from './ui/Epilogue';
 import { DescentGame } from './game/DescentGame';
 import { EnergyGame } from './game/EnergyGame';
+import { RpgMode } from './rpg/RpgMode';
 
 const EPILOGUE_AT = 3.75; // índice de paso, no progreso
 
@@ -25,6 +26,7 @@ export default function App() {
   const [reading, setReading] = useState(() => !hasWebGL());
   const [ready, setReady] = useState(false);
   const [game, setGame] = useState<GameId | null>(null);
+  const [rpg, setRpg] = useState(false);
 
   // Mantiene la última tarjeta visible mientras la cámara viaja entre estaciones.
   const lastIndex = useRef(0);
@@ -44,38 +46,49 @@ export default function App() {
 
   // Bloquea el scroll del museo mientras hay un minijuego o el modo lectura abierto.
   useEffect(() => {
-    const locked = game !== null || reading;
+    const locked = game !== null || reading || rpg;
     document.body.style.overflow = locked ? 'hidden' : '';
     return () => {
       document.body.style.overflow = '';
     };
-  }, [game, reading]);
+  }, [game, reading, rpg]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setReading(false);
         setGame(null);
+        setRpg(false);
       }
-      if (reading || game) return;
+      if (reading || game || rpg) return;
       if (event.key === 'ArrowRight') goTo(Math.min(ARTIFACT_COUNT - 1, station + 1));
       if (event.key === 'ArrowLeft') goTo(Math.max(0, station - 1));
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [goTo, reading, station, game]);
+  }, [goTo, reading, station, game, rpg]);
 
   const heroVisible = scaled < 0.5;
-  const cardVisible = card !== null && scaled < EPILOGUE_AT && !reading;
-  const epilogueVisible = scaled >= EPILOGUE_AT && !reading && game === null;
+  const cardVisible = card !== null && scaled < EPILOGUE_AT && !reading && !rpg;
+  const epilogueVisible = scaled >= EPILOGUE_AT && !reading && game === null && !rpg;
   const activeArtifact = ARTIFACTS[lastIndex.current];
 
   const restart = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // al cerrar un minijuego, el foco vuelve al botón que lo abrió
+  const closeGame = () => {
+    setGame(null);
+    requestAnimationFrame(() => {
+      document.querySelector<HTMLButtonElement>('.play-button')?.focus();
+    });
+  };
+
   return (
     <div className="app">
+      {/* el fondo se vuelve inerte cuando hay un overlay abierto: el foco no se escapa */}
+      <div className="app-main" inert={game !== null || reading}>
       <div className={`stage ${reading ? 'is-hidden' : ''}`} aria-hidden="true">
         <Canvas
           dpr={[1, 1.75]}
@@ -133,7 +146,12 @@ export default function App() {
         <p className="hero-hint">Desliza para empezar el recorrido</p>
       </div>
 
-      <ChapterCard artifact={activeArtifact} visible={cardVisible} onPlay={setGame} />
+      <ChapterCard
+        artifact={activeArtifact}
+        visible={cardVisible}
+        onPlay={setGame}
+        onStartRpg={() => setRpg(true)}
+      />
 
       <Epilogue
         visible={epilogueVisible}
@@ -145,11 +163,14 @@ export default function App() {
 
       <footer className="credits">Modelos: NASA 3D Resources · Datos: NSSDCA</footer>
 
+      </div>
+
       <Loader progress={loadProgress} done={ready} />
 
       {reading && <ReadingMode onClose={() => setReading(false)} />}
-      {game === 'descent' && <DescentGame onClose={() => setGame(null)} />}
-      {game === 'energy' && <EnergyGame onClose={() => setGame(null)} />}
+      {game === 'descent' && <DescentGame onClose={closeGame} />}
+      {game === 'energy' && <EnergyGame onClose={closeGame} />}
+      {rpg && <RpgMode onClose={() => setRpg(false)} />}
     </div>
   );
 }

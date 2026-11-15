@@ -1,3 +1,5 @@
+import { EPILOGUE } from '../data/epilogue';
+
 interface EpilogueProps {
   visible: boolean;
   onRestart: () => void;
@@ -10,37 +12,21 @@ export function Epilogue({ visible, onRestart, onReading }: EpilogueProps) {
       <div className="epilogue-inner">
         <p className="epilogue-kicker">Epílogo</p>
 
-        <h2 className="epilogue-title">
-          La diferencia entre basura
-          <br />y patrimonio es la memoria.
-        </h2>
+        <h2 className="epilogue-title">{EPILOGUE.title}</h2>
 
         <div className="epilogue-text">
-          <p>
-            En 1969 dejamos un módulo lunar en la Luna porque no podía volver. En 2021 dejamos tubos
-            de muestra en Marte <em>a propósito</em>, para que alguien vuelva a buscarlos. Si la misión
-            de retorno sale bien, serán los primeros objetos fabricados por humanos recogidos de otro
-            planeta.
-          </p>
-          <p>
-            Lo que separa una cosa de la otra no es el material ni la tecnología. Es si alguien sabe
-            dónde está y por qué se dejó ahí.
-          </p>
+          {EPILOGUE.paragraphs.map((paragraph) => (
+            <p key={paragraph.slice(0, 24)}>{paragraph}</p>
+          ))}
         </div>
 
         <div className="epilogue-stats">
-          <div>
-            <span className="epilogue-number">4</span>
-            <span className="epilogue-label">máquinas contadas</span>
-          </div>
-          <div>
-            <span className="epilogue-number">3</span>
-            <span className="epilogue-label">mundos</span>
-          </div>
-          <div>
-            <span className="epilogue-number">55</span>
-            <span className="epilogue-label">años de historia</span>
-          </div>
+          {EPILOGUE.stats.map((stat) => (
+            <div key={stat.label}>
+              <span className="epilogue-number">{stat.value}</span>
+              <span className="epilogue-label">{stat.label}</span>
+            </div>
+          ))}
         </div>
 
         <div className="epilogue-actions">

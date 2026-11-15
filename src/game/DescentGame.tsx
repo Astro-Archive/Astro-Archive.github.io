@@ -18,6 +18,7 @@ import {
 function LunarScene({ sim, input }: { sim: React.RefObject<Sim>; input: React.RefObject<Input> }) {
   const craft = useRef<THREE.Group>(null);
   const flame = useRef<THREE.Mesh>(null);
+  const glow = useRef<THREE.PointLight>(null);
   const camera = useThree((s) => s.camera);
 
   useFrame(() => {
@@ -31,6 +32,7 @@ function LunarScene({ sim, input }: { sim: React.RefObject<Sim>; input: React.Re
     if (flame.current) {
       const on = input.current.thrust && s.fuel > 0 && s.outcome === 'flying';
       flame.current.visible = on;
+      if (glow.current) glow.current.intensity = on ? 26 : 0;
       if (on) {
         const flicker = 0.85 + Math.random() * 0.3;
         flame.current.scale.set(flicker, flicker, flicker);
@@ -76,10 +78,11 @@ function LunarScene({ sim, input }: { sim: React.RefObject<Sim>; input: React.Re
 
       <group ref={craft}>
         <ArtifactModel url="models/lunar-module.glb" fit={10} yaw={0.5} reduced />
-        <mesh ref={flame} position={[0, 0.9, 0]} rotation={[Math.PI, 0, 0]} visible={false}>
-          <coneGeometry args={[1.0, 3.4, 12, 1, true]} />
-          <meshBasicMaterial color="#ffb46b" transparent opacity={0.5} side={2} depthWrite={false} />
+        <mesh ref={flame} position={[0, 0.8, 0]} rotation={[Math.PI, 0, 0]} visible={false}>
+          <coneGeometry args={[1.25, 4.2, 12, 1, true]} />
+          <meshBasicMaterial color="#ffc48a" transparent opacity={0.75} side={2} depthWrite={false} />
         </mesh>
+        <pointLight ref={glow} position={[0, -0.4, 0]} color="#ffb46b" distance={34} decay={2} intensity={0} />
       </group>
     </>
   );
@@ -96,6 +99,11 @@ function Bar({ value, color }: { value: number; color: string }) {
 /* ---------- juego ---------- */
 
 export function DescentGame({ onClose }: { onClose: () => void }) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    rootRef.current?.focus();
+  }, []);
+
   const sim = useRef<Sim>(createSim(7));
   const input = useRef<Input>({ thrust: false, left: false, right: false });
   const [started, setStarted] = useState(false);
@@ -187,7 +195,9 @@ export function DescentGame({ onClose }: { onClose: () => void }) {
   const playing = started && result.outcome === 'flying';
 
   return (
-    <div className="game" role="dialog" aria-modal="true" aria-label="Simulador de descenso lunar">
+    <div className="game" role="dialog" aria-modal="true" aria-label="Simulador de descenso lunar"
+      tabIndex={-1}
+      ref={rootRef}>
       <div className="game-stage">
         <Canvas
           dpr={[1, 1.6]}

@@ -5,6 +5,7 @@ interface ChapterCardProps {
   artifact: Artifact;
   visible: boolean;
   onPlay: (game: GameId) => void;
+  onStartRpg: () => void;
 }
 
 const GAME_LABEL: Record<GameId, { title: string; cta: string }> = {
@@ -19,7 +20,7 @@ const BEATS: Array<{ key: keyof Artifact['facts']; label: string }> = [
   { key: 'now', label: 'Qué es ahora' },
 ];
 
-export function ChapterCard({ artifact, visible, onPlay }: ChapterCardProps) {
+export function ChapterCard({ artifact, visible, onPlay, onStartRpg }: ChapterCardProps) {
   return (
     <aside
       className={`card ${visible ? 'is-visible' : ''}`}
@@ -49,6 +50,16 @@ export function ChapterCard({ artifact, visible, onPlay }: ChapterCardProps) {
             <p className="play-title">{GAME_LABEL[artifact.game].title}</p>
             <button type="button" className="play-button" onClick={() => onPlay(artifact.game!)}>
               {GAME_LABEL[artifact.game].cta}
+            </button>
+          </div>
+        )}
+
+        {artifact.id === 'eagle' && (
+          <div className="play-block rpg-entry">
+            <span className="play-tag">Modo RPG educativo</span>
+            <p className="play-title">El primer paso</p>
+            <button type="button" className="play-button" onClick={onStartRpg}>
+              Comenzar misión
             </button>
           </div>
         )}

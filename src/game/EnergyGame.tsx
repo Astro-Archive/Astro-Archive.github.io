@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 /**
  * Presupuesto de energía de Opportunity durante la tormenta de 2018.
@@ -24,6 +24,11 @@ const ACTION_LABEL: Record<Action, string> = {
 };
 
 export function EnergyGame({ onClose }: { onClose: () => void }) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    rootRef.current?.focus();
+  }, []);
+
   const [sol, setSol] = useState(0);
   const [budget, setBudget] = useState(SOLS[0].wh);
   const [pending, setPending] = useState(0);
@@ -81,7 +86,9 @@ export function EnergyGame({ onClose }: { onClose: () => void }) {
   if (over) {
     const total = sent + pending;
     return (
-      <div className="game game-energy" role="dialog" aria-modal="true" aria-label="El último invierno de Opportunity">
+      <div className="game game-energy" role="dialog" aria-modal="true" aria-label="El último invierno de Opportunity"
+      tabIndex={-1}
+      ref={rootRef}>
         <header className="game-bar">
           <div>
             <p className="game-kicker">Fin de la misión</p>
@@ -123,7 +130,9 @@ export function EnergyGame({ onClose }: { onClose: () => void }) {
   const current = SOLS[sol];
 
   return (
-    <div className="game game-energy" role="dialog" aria-modal="true" aria-label="El último invierno de Opportunity">
+    <div className="game game-energy" role="dialog" aria-modal="true" aria-label="El último invierno de Opportunity"
+      tabIndex={-1}
+      ref={rootRef}>
       <header className="game-bar">
         <div>
           <p className="game-kicker">El último invierno</p>
