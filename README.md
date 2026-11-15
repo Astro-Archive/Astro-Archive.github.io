@@ -57,6 +57,21 @@ host, incluido un subdirectorio.
 - **Vercel**: `npx vercel --prod` (o arrastrar `dist/`).
 - **GitHub Pages**: subir el contenido de `dist/` a la rama `gh-pages`.
 
+`public/_headers` aplica cache largo a los assets con hash y cabeceras de seguridad
+(Netlify lo copia a `dist/` en cada build).
+
+### Dominio propio (opcional)
+
+Si registras un dominio, conéctalo a Netlify y compila con la URL absoluta: Open Graph
+exige URLs absolutas para la imagen y no todos los scrapers resuelven rutas relativas.
+
+```bash
+SITE_URL=https://tu-dominio.space bun run build
+```
+
+Sin la variable, el build funciona igual, pero `og:image` queda como ruta relativa.
+En Netlify, define `SITE_URL` en las variables de entorno del sitio.
+
 - **Scroll** para viajar entre estaciones.
 - **Timeline inferior** para saltar a un capítulo.
 - **← / →** navegación por teclado.
