@@ -120,6 +120,9 @@ Sin router, sin GSAP, sin Lenis, sin framework de UI. Todo lo visual está gener
 
 ```
 docs/PLAN.md              plan de proyecto y decisiones
+docs/DATOS.md             cada cifra con su fuente
+docs/QA.md                qué se verificó y qué no
+docs/GUION-VIDEO.md       guion del video de 100 s
 public/models/*.glb       4 modelos de NASA 3D Resources
 scripts/check.mjs         verificación con Chromium headless (capturas + errores)
 src/
@@ -183,6 +186,8 @@ Estas son las trampas que el proyecto evita a propósito:
   navegador no soporta WebGL.
 - `prefers-reduced-motion`: sin partículas, sin deriva de cámara, sin transiciones.
 - Navegación completa por teclado con foco visible.
+- Los overlays atrapan el foco: el fondo queda `inert` y al cerrar el foco vuelve al botón
+  que los abrió.
 - Contraste AA sobre fondo oscuro.
 - La cámara se adapta al aspecto de la pantalla: en móvil se aleja y encuadra el
   artefacto por encima de la tarjeta.

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { ArtifactModel } from '../scene/ArtifactModel';
@@ -15,11 +15,42 @@ import {
 
 /* ---------- escena ---------- */
 
+/** Llama pintada en canvas: degradado vertical con forma de pluma. Sin shaders. */
+function useFlameTexture() {
+  return useMemo(() => {
+    const w = 96;
+    const h = 192;
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d')!;
+
+    const gradient = ctx.createLinearGradient(0, 0, 0, h);
+    gradient.addColorStop(0, 'rgba(255, 252, 232, 1)');
+    gradient.addColorStop(0.18, 'rgba(255, 226, 150, 1)');
+    gradient.addColorStop(0.45, 'rgba(255, 160, 60, 0.85)');
+    gradient.addColorStop(0.78, 'rgba(255, 96, 20, 0.4)');
+    gradient.addColorStop(1, 'rgba(255, 70, 0, 0)');
+
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.moveTo(w / 2, 0);
+    ctx.bezierCurveTo(w * 0.96, h * 0.18, w * 0.9, h * 0.72, w / 2, h);
+    ctx.bezierCurveTo(w * 0.1, h * 0.72, w * 0.04, h * 0.18, w / 2, 0);
+    ctx.fill();
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    return texture;
+  }, []);
+}
+
 function LunarScene({ sim, input }: { sim: React.RefObject<Sim>; input: React.RefObject<Input> }) {
   const craft = useRef<THREE.Group>(null);
   const flame = useRef<THREE.Mesh>(null);
   const glow = useRef<THREE.PointLight>(null);
   const camera = useThree((s) => s.camera);
+  const flameMap = useFlameTexture();
 
   useFrame(() => {
     // la cámara se acerca a medida que el módulo baja: el aterrizaje se ve de cerca
@@ -78,9 +109,15 @@ function LunarScene({ sim, input }: { sim: React.RefObject<Sim>; input: React.Re
 
       <group ref={craft}>
         <ArtifactModel url="models/lunar-module.glb" fit={10} yaw={0.5} reduced />
-        <mesh ref={flame} position={[0, 0.8, 0]} rotation={[Math.PI, 0, 0]} visible={false}>
-          <coneGeometry args={[1.25, 4.2, 12, 1, true]} />
-          <meshBasicMaterial color="#ffc48a" transparent opacity={0.75} side={2} depthWrite={false} />
+        <mesh ref={flame} position={[0, -1.0, 0.4]} visible={false}>
+          <planeGeometry args={[2.4, 5.6]} />
+          <meshBasicMaterial
+            map={flameMap}
+            transparent
+            depthWrite={false}
+            blending={THREE.AdditiveBlending}
+            toneMapped={false}
+          />
         </mesh>
         <pointLight ref={glow} position={[0, -0.4, 0]} color="#ffb46b" distance={34} decay={2} intensity={0} />
       </group>
