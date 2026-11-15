@@ -7,7 +7,7 @@ import react from '@vitejs/plugin-react';
  * Open Graph exige URLs absolutas para la imagen; sin dominio, se queda en
  * rutas relativas (que la mayoría de scrapers resuelven igual).
  *
- *   SITE_URL=https://stilllistening.space bun run build
+ *   SITE_URL=https://astroarchive.earth/ bun run build
  */
 function siteUrl(): Plugin {
   const site = (process.env.SITE_URL ?? './').replace(/\/*$/, '/');

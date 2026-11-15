@@ -66,15 +66,27 @@ host, incluido un subdirectorio.
 
 - **Netlify**: arrastrar la carpeta `dist/` a `app.netlify.com/drop`.
 - **Vercel**: `npx vercel --prod` (o arrastrar `dist/`).
-- **GitHub Pages**: subir el contenido de `dist/` a la rama `gh-pages`.
+- **GitHub Pages**: el workflow de `.github/workflows/deploy.yml` publica `main`.
+
+### Despliegue en astroarchive.earth
+
+Este repositorio es el **org site** de Astro Archive
+(`Astro-Archive/Astro-Archive.github.io`), así que GitHub Pages lo sirve en la raíz:
+**https://astroarchive.earth/**. El simulador sigue como project site en
+**https://astroarchive.earth/astro-archive/** y se abre desde el HUD.
+
+El workflow compila con `SITE_URL=https://astroarchive.earth/` cuando el repo es el
+org site; para cualquier otro nombre usa `https://astroarchive.earth/<repo>/`. La
+ruta antigua `/still-listening/` redirige a la raíz mediante
+`public/still-listening/index.html`.
 
 `public/_headers` aplica cache largo a los assets con hash y cabeceras de seguridad
 (Netlify lo copia a `dist/` en cada build).
 
 ### Dominio propio (opcional)
 
-Si registras un dominio, conéctalo a Netlify y compila con la URL absoluta: Open Graph
-exige URLs absolutas para la imagen y no todos los scrapers resuelven rutas relativas.
+El dominio ya está configurado en el org site de GitHub Pages. Para una compilación
+local que genere Open Graph absolutos:
 
 ```bash
 SITE_URL=https://tu-dominio.space bun run build

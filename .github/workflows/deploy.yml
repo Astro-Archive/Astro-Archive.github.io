@@ -30,9 +30,15 @@ jobs:
         uses: actions/configure-pages@v6
 
       - name: Resolve site URL
-        # Dominio propio: el org site de Astro-Archive (astroarchive.earth) se hereda
-        # por los project sites, y cada uno se sirve bajo su nombre de repositorio.
-        run: echo "SITE_URL=https://astroarchive.earth/${GITHUB_REPOSITORY#*/}/" >> "$GITHUB_ENV"
+        # El org site (Astro-Archive.github.io) se sirve en la raíz del dominio.
+        # Cualquier otro repo es un project site y cuelga de /<repo>/.
+        run: |
+          repo="${GITHUB_REPOSITORY#*/}"
+          if [ "${repo,,}" = "astro-archive.github.io" ]; then
+            echo "SITE_URL=https://astroarchive.earth/" >> "$GITHUB_ENV"
+          else
+            echo "SITE_URL=https://astroarchive.earth/${repo}/" >> "$GITHUB_ENV"
+          fi
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
