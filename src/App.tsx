@@ -11,7 +11,9 @@ import { Loader } from './ui/Loader';
 import { Epilogue } from './ui/Epilogue';
 import { DescentGame } from './game/DescentGame';
 import { EnergyGame } from './game/EnergyGame';
-import { RpgMode } from './rpg/RpgMode';
+import { InterviewGame } from './rpg/InterviewGame';
+import { Catalog } from './rpg/Catalog';
+import { completedInterviews, useCatalog } from './rpg/catalog';
 
 const EPILOGUE_AT = 3.75; // índice de paso, no progreso
 
@@ -26,7 +28,10 @@ export default function App() {
   const [reading, setReading] = useState(() => !hasWebGL());
   const [ready, setReady] = useState(false);
   const [game, setGame] = useState<GameId | null>(null);
-  const [rpg, setRpg] = useState(false);
+  const [interview, setInterview] = useState<string | null>(null);
+  const [catalogOpen, setCatalogOpen] = useState(false);
+  const catalog = useCatalog();
+  const interviewed = completedInterviews(catalog);
 
   // Mantiene la última tarjeta visible mientras la cámara viaja entre estaciones.
   const lastIndex = useRef(0);
@@ -46,32 +51,32 @@ export default function App() {
 
   // Bloquea el scroll del museo mientras hay un minijuego o el modo lectura abierto.
   useEffect(() => {
-    const locked = game !== null || reading || rpg;
+    const locked = game !== null || reading || interview !== null || catalogOpen;
     document.body.style.overflow = locked ? 'hidden' : '';
     return () => {
       document.body.style.overflow = '';
     };
-  }, [game, reading, rpg]);
+  }, [game, reading, interview, catalogOpen]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setReading(false);
         setGame(null);
-        setRpg(false);
       }
-      if (reading || game || rpg) return;
+      if (reading || game || interview || catalogOpen) return;
       if (event.key === 'ArrowRight') goTo(Math.min(ARTIFACT_COUNT - 1, station + 1));
       if (event.key === 'ArrowLeft') goTo(Math.max(0, station - 1));
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [goTo, reading, station, game, rpg]);
+  }, [goTo, reading, station, game, interview, catalogOpen]);
 
   const heroVisible = scaled < 0.5;
-  const cardVisible = card !== null && scaled < EPILOGUE_AT && !reading && !rpg;
-  const epilogueVisible = scaled >= EPILOGUE_AT && !reading && game === null && !rpg;
+  const cardVisible = card !== null && scaled < EPILOGUE_AT && !reading;
+  const epilogueVisible = scaled >= EPILOGUE_AT && !reading && game === null;
   const activeArtifact = ARTIFACTS[lastIndex.current];
+  const overlayOpen = game !== null || interview !== null || catalogOpen || reading;
 
   const restart = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -85,10 +90,27 @@ export default function App() {
     });
   };
 
+  const closeInterview = () => {
+    setInterview(null);
+    requestAnimationFrame(() => {
+      document.querySelector<HTMLButtonElement>('.interview-button')?.focus();
+    });
+  };
+
+  const openCatalog = () => {
+    setInterview(null);
+    setCatalogOpen(true);
+  };
+
+  const startInterview = (artifactId: string) => {
+    setCatalogOpen(false);
+    setInterview(artifactId);
+  };
+
   return (
     <div className="app">
       {/* el fondo se vuelve inerte cuando hay un overlay abierto: el foco no se escapa */}
-      <div className="app-main" inert={game !== null || reading}>
+      <div className="app-main" inert={overlayOpen}>
       <div className={`stage ${reading ? 'is-hidden' : ''}`} aria-hidden="true">
         <Canvas
           dpr={[1, 1.75]}
@@ -123,6 +145,14 @@ export default function App() {
           <button
             type="button"
             className="ghost-button"
+            onClick={() => setCatalogOpen(true)}
+            aria-label={`Abrir catálogo de memoria, ${interviewed} de 4 artefactos entrevistados`}
+          >
+            Catálogo {interviewed}/4
+          </button>
+          <button
+            type="button"
+            className="ghost-button"
             onClick={() => setReading((value) => !value)}
             aria-pressed={reading}
           >
@@ -150,7 +180,7 @@ export default function App() {
         artifact={activeArtifact}
         visible={cardVisible}
         onPlay={setGame}
-        onStartRpg={() => setRpg(true)}
+        onInterview={startInterview}
       />
 
       <Epilogue
@@ -170,7 +200,17 @@ export default function App() {
       {reading && <ReadingMode onClose={() => setReading(false)} />}
       {game === 'descent' && <DescentGame onClose={closeGame} />}
       {game === 'energy' && <EnergyGame onClose={closeGame} />}
-      {rpg && <RpgMode onClose={() => setRpg(false)} />}
+      {interview && (
+        <InterviewGame
+          artifact={ARTIFACTS.find((a) => a.id === interview) ?? ARTIFACTS[0]}
+          reduced={reduced}
+          onClose={closeInterview}
+          onCatalog={openCatalog}
+        />
+      )}
+      {catalogOpen && (
+        <Catalog onClose={() => setCatalogOpen(false)} onInterview={startInterview} />
+      )}
     </div>
   );
 }

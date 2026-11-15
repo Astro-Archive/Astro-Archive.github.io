@@ -50,6 +50,22 @@ Sin desbordamiento horizontal en ninguno de los dos (`scrollWidth <= innerWidth`
 | Salto de sol con presupuesto real | ✓ Sol 5105 (468 Wh) → Sol 5106 (345 Wh) |
 | Epílogo visible al final del scroll | ✓ |
 
+## 4 bis. RPG de entrevistas
+
+`scripts/rpg.mjs` abre una entrevista, la juega entera y revisa el catálogo.
+
+| Comprobación | Escritorio | Móvil (390×844) |
+|---|---|---|
+| Se abre desde la ficha | ✓ | ✓ |
+| Retrato (placeholder SVG) | ✓ | ✓ |
+| 7 opciones visibles | ✓ (2 columnas) | ✓ (1 columna) |
+| Señal 4 → 3 → 2 → 1 → 0 | ✓ | ✓ |
+| Opciones 7 → 6 → 5 → 4 | ✓ | ✓ |
+| Entrada de catálogo con fragmentos | ✓ 3 de 4 | ✓ 3 de 4 |
+| Escena marcada como apagada | ✓ | ✓ |
+| Catálogo: 4 filas, contador en el HUD | ✓ 1/4 | ✓ 1/4 |
+| Errores de consola | 0 | 0 |
+
 ## 5. Balance de la física
 
 `scripts/balance.ts` simula estrategias con el **mismo módulo** que usa el juego

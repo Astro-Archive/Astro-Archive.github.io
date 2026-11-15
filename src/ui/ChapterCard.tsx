@@ -5,7 +5,7 @@ interface ChapterCardProps {
   artifact: Artifact;
   visible: boolean;
   onPlay: (game: GameId) => void;
-  onStartRpg: () => void;
+  onInterview: (artifactId: string) => void;
 }
 
 const GAME_LABEL: Record<GameId, { title: string; cta: string }> = {
@@ -20,7 +20,7 @@ const BEATS: Array<{ key: keyof Artifact['facts']; label: string }> = [
   { key: 'now', label: 'Qué es ahora' },
 ];
 
-export function ChapterCard({ artifact, visible, onPlay, onStartRpg }: ChapterCardProps) {
+export function ChapterCard({ artifact, visible, onPlay, onInterview }: ChapterCardProps) {
   return (
     <aside
       className={`card ${visible ? 'is-visible' : ''}`}
@@ -54,16 +54,6 @@ export function ChapterCard({ artifact, visible, onPlay, onStartRpg }: ChapterCa
           </div>
         )}
 
-        {artifact.id === 'eagle' && (
-          <div className="play-block rpg-entry">
-            <span className="play-tag">Modo RPG educativo</span>
-            <p className="play-title">El primer paso</p>
-            <button type="button" className="play-button" onClick={onStartRpg}>
-              Comenzar misión
-            </button>
-          </div>
-        )}
-
         <dl className="facts">
           {BEATS.map((beat) => (
             <div className="fact" key={beat.key}>
@@ -77,6 +67,10 @@ export function ChapterCard({ artifact, visible, onPlay, onStartRpg }: ChapterCa
           <span className="voice-tag">Voz ficcionalizada</span>
           {artifact.voice}
         </blockquote>
+
+        <button type="button" className="interview-button" onClick={() => onInterview(artifact.id)}>
+          Conectar con la máquina
+        </button>
 
         {artifact.note && (
           <p className="note">

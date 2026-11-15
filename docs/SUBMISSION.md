@@ -58,6 +58,16 @@ capítulos incluyen una mecánica de veinte segundos:
   ganar: la tormenta era más grande que cualquier presupuesto. Se juega cuánta ciencia
   llega a casa antes del silencio.
 
+### La última entrevista
+
+Cada artefacto se puede **entrevistar**. Cuatro unidades de señal, siete preguntas
+posibles: no alcanzan para todas. Cada respuesta gasta una unidad y revela un fragmento
+de memoria; al llegar a cero la luz del artefacto se apaga y se guarda lo que alcanzaste
+a oír. Lo que no preguntaste se pierde.
+
+Es la pieza que convierte la visita en algo personal: el visitante no recibe la historia,
+la **rescata**.
+
 ### Cierre
 
 El epílogo conecta el pasado con el presente: en 1969 dejamos un módulo porque no podía

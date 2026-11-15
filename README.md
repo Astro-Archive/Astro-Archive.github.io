@@ -91,6 +91,19 @@ artefacto y devuelve al museo al terminar.
 Ambos usan cifras reales (18.184 lb de propelente, 770 lb al aterrizar, 468 → 22 Wh) y
 están documentados en `docs/DATOS.md`.
 
+### Entrevistas: la última entrevista
+
+Cada ficha tiene un botón **"Conectar con la máquina"**. Se abre un RPG de diálogo con
+cuatro unidades de señal y siete preguntas posibles: no alcanzan para todas, y lo que no
+preguntas se pierde. Al llegar a cero, la luz del artefacto se apaga y se genera una
+entrada en el **catálogo de memoria**, que persiste entre visitas (`localStorage`).
+
+- 4 entrevistas × 7 preguntas = 28 respuestas, todas con fuente en `docs/DATOS.md`.
+- 16 fragmentos de catálogo, 4 por artefacto.
+- Los retratos son placeholders SVG hasta que se reemplacen por los PNG generados con IA:
+  el componente intenta `portrait-<id>.png` y cae al SVG sin tocar código.
+- Plan completo, dirección de arte y prompts: `docs/RPG.md`.
+
 ---
 
 ## Stack
@@ -129,6 +142,12 @@ src/
   data/artifacts.ts       todo el contenido: textos, fuentes, paletas, cámaras
   lib/noise.ts            ruido de valor + fBm + cráteres
   lib/useScroll.ts        progreso de scroll, reduced-motion, detección de WebGL
+  rpg/
+    interviews.ts         las 28 respuestas, con fuente
+    catalog.ts            catálogo persistente (localStorage)
+    InterviewGame.tsx     overlay de la entrevista
+    InterviewScene.tsx    diorama low-poly del artefacto
+    Catalog.tsx           catálogo de memoria
   game/
     DescentGame.tsx       minijuego de descenso (overlay 3D)
     descentPhysics.ts     física pura, compartida con el script de balance
