@@ -19,6 +19,7 @@ export const PAD = 6;
 export const SAFE_VY = 1.5;
 
 export type Outcome = 'flying' | 'won' | 'lost';
+export type Reason = 'outside' | 'hard' | 'soft';
 
 export interface Sim {
   y: number;
@@ -27,7 +28,9 @@ export interface Sim {
   vx: number;
   fuel: number;
   outcome: Outcome;
-  reason: string;
+  reason: Reason | null;
+  /** velocidad vertical absoluta en el momento del contacto */
+  impact: number;
 }
 
 export interface Input {
@@ -44,7 +47,8 @@ export function createSim(drift: number): Sim {
     vx: 0,
     fuel: 1,
     outcome: 'flying',
-    reason: '',
+    reason: null,
+    impact: 0,
   };
 }
 
@@ -70,17 +74,18 @@ export function step(s: Sim, dt: number, input: Input): void {
 
   if (s.y <= 0) {
     s.y = 0;
-    const soft = Math.abs(s.vy) <= SAFE_VY;
+    s.impact = Math.abs(s.vy);
+    const soft = s.impact <= SAFE_VY;
     const inside = Math.abs(s.x) <= PAD;
     if (!inside) {
       s.outcome = 'lost';
-      s.reason = 'Te quedaste fuera del círculo: terreno irregular, una pata rota.';
+      s.reason = 'outside';
     } else if (!soft) {
       s.outcome = 'lost';
-      s.reason = `Tocaste a ${Math.abs(s.vy).toFixed(1)} m/s. El tren de aterrizaje no aguanta eso.`;
+      s.reason = 'hard';
     } else {
       s.outcome = 'won';
-      s.reason = `Tocaste a ${Math.abs(s.vy).toFixed(1)} m/s, dentro del círculo.`;
+      s.reason = 'soft';
     }
   }
 }

@@ -1,32 +1,39 @@
-import { ARTIFACTS } from '../data/artifacts';
-import { EPILOGUE } from '../data/epilogue';
+import { artifactsFor } from '../data/artifacts';
+import { epilogueFor } from '../data/epilogue';
+import { useLang } from '../i18n/lang';
+import { uiFor } from '../i18n/ui';
+import { LanguageSwitch } from './LanguageSwitch';
 
 interface ReadingModeProps {
   onClose: () => void;
 }
 
 export function ReadingMode({ onClose }: ReadingModeProps) {
+  const { lang } = useLang();
+  const t = uiFor(lang);
+  const artifacts = artifactsFor(lang);
+  const epilogue = epilogueFor(lang);
+
   return (
-    <div className="reading" role="dialog" aria-modal="true" aria-label="Modo lectura">
+    <div className="reading" role="dialog" aria-modal="true" aria-label={t.readingAria}>
       <div className="reading-bar">
-        <span className="reading-kicker">Modo lectura · sin 3D</span>
-        <button type="button" className="ghost-button" onClick={onClose} autoFocus>
-          Volver al recorrido
-        </button>
+        <span className="reading-kicker">{t.readingKicker}</span>
+        <div className="reading-actions">
+          <LanguageSwitch />
+          <button type="button" className="ghost-button" onClick={onClose} autoFocus>
+            {t.backToTour}
+          </button>
+        </div>
       </div>
 
       <article className="reading-body">
         <header className="reading-head">
           <h1>Still Listening</h1>
-          <p className="reading-sub">Los que siguen escuchando</p>
-          <p className="reading-intro">
-            Desde 1969, la NASA ha dejado máquinas en la Luna, en Marte y en el espacio profundo.
-            Algunas todavía responden. Otras llevan décadas en silencio. Estas son cuatro de sus
-            historias: qué eran, por qué fueron y qué descubrieron.
-          </p>
+          <p className="reading-sub">{t.brandSub}</p>
+          <p className="reading-intro">{t.readingIntro}</p>
         </header>
 
-        {ARTIFACTS.map((artifact) => (
+        {artifacts.map((artifact) => (
           <section className="reading-chapter" key={artifact.id} id={`lectura-${artifact.id}`}>
             <div className="reading-chapter-head">
               <span className="reading-index">{artifact.index}</span>
@@ -41,39 +48,37 @@ export function ReadingMode({ onClose }: ReadingModeProps) {
             <p className="reading-status">{artifact.statusLabel}</p>
 
             <dl className="reading-facts">
-              <dt>Qué es</dt>
+              <dt>{t.factWhat}</dt>
               <dd>{artifact.facts.what}</dd>
-              <dt>Por qué fue</dt>
+              <dt>{t.factWhy}</dt>
               <dd>{artifact.facts.why}</dd>
-              <dt>Qué encontró</dt>
+              <dt>{t.factFound}</dt>
               <dd>{artifact.facts.found}</dd>
-              <dt>Qué es ahora</dt>
+              <dt>{t.factNow}</dt>
               <dd>{artifact.facts.now}</dd>
             </dl>
 
             <blockquote className="reading-voice">
-              <span className="voice-tag">Voz ficcionalizada</span>
+              <span className="voice-tag">{t.voiceTag}</span>
               {artifact.voice}
             </blockquote>
 
             {artifact.game && (
               <p className="reading-game">
-                <span className="voice-tag">Minijuego disponible en 3D</span>
-                {artifact.game === 'descent'
-                  ? 'Pilotar el descenso enseña que la etapa de descenso no podía volver a la órbita lunar: aunque sobrara combustible, el regreso necesitaba otro motor y otro tanque.'
-                  : 'Repartir la energía de los últimos soles enseña que la tormenta de 2018 no fue una avería, sino un presupuesto que se agotó: 468, 345, 133 y 22 vatios-hora.'}
+                <span className="voice-tag">{t.gameAvailable}</span>
+                {artifact.game === 'descent' ? t.readingGameDescent : t.readingGameEnergy}
               </p>
             )}
 
             {artifact.note && (
               <p className="note">
-                <span className="note-tag">Ojo con el dato</span>
+                <span className="note-tag">{t.noteTag}</span>
                 {artifact.note}
               </p>
             )}
 
             <p className="reading-sources">
-              Fuentes:{' '}
+              {t.readingSources}{' '}
               {artifact.sources.map((source, i) => (
                 <span key={source.url}>
                   <a href={source.url} target="_blank" rel="noreferrer noopener">
@@ -87,13 +92,13 @@ export function ReadingMode({ onClose }: ReadingModeProps) {
         ))}
 
         <section className="reading-chapter reading-epilogue">
-          <p className="reading-index">Epílogo</p>
-          <h2>{EPILOGUE.title}</h2>
-          {EPILOGUE.paragraphs.map((paragraph) => (
+          <p className="reading-index">{t.epilogueKicker}</p>
+          <h2>{epilogue.title}</h2>
+          {epilogue.paragraphs.map((paragraph) => (
             <p key={paragraph.slice(0, 24)}>{paragraph}</p>
           ))}
           <div className="reading-stats">
-            {EPILOGUE.stats.map((stat) => (
+            {epilogue.stats.map((stat) => (
               <div key={stat.label}>
                 <strong>{stat.value}</strong> {stat.label}
               </div>
@@ -102,15 +107,8 @@ export function ReadingMode({ onClose }: ReadingModeProps) {
         </section>
 
         <footer className="reading-footer">
-          <p>
-            Modelos 3D: <strong>NASA 3D Resources</strong>. Datos: <strong>NSSDCA</strong> y páginas
-            de misión de NASA Science. Los textos de la sección &laquo;Voz ficcionalizada&raquo; son
-            recreaciones literarias, no transmisiones reales.
-          </p>
-          <p>
-            NASA no patrocina ni respalda este proyecto. NASA es la fuente de los modelos y de los
-            datos citados.
-          </p>
+          <p>{t.readingFooter1}</p>
+          <p>{t.readingFooter2}</p>
         </footer>
       </article>
     </div>

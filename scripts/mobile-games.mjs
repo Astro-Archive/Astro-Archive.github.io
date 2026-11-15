@@ -16,10 +16,10 @@ await p.screenshot({path:`${OUT}/m1-eagle.png`});
 await p.evaluate(()=>[...document.querySelectorAll('button')].find(b=>b.textContent.includes('Intentar'))?.click());
 await new Promise(r=>setTimeout(r,2000));
 await p.screenshot({path:`${OUT}/m2-descent-start.png`});
-await p.evaluate(()=>[...document.querySelectorAll('button')].find(b=>b.textContent.includes('Empezar'))?.click());
+await p.evaluate(()=>[...document.querySelectorAll('button')].find(b=>b.textContent.includes('Start'))?.click());
 await new Promise(r=>setTimeout(r,3000));
 await p.screenshot({path:`${OUT}/m3-descent-play.png`});
-await p.evaluate(()=>[...document.querySelectorAll('button')].find(b=>b.textContent.includes('Volver al museo'))?.click());
+await p.evaluate(()=>[...document.querySelectorAll('button')].find(b=>b.textContent.includes('Back to the museum'))?.click());
 await new Promise(r=>setTimeout(r,1200));
 
 await p.evaluate(h=>scrollTo(0,h*2), vh);
@@ -27,7 +27,7 @@ await new Promise(r=>setTimeout(r,2500));
 await p.evaluate(()=>[...document.querySelectorAll('button')].find(b=>b.textContent.includes('Repartir'))?.click());
 await new Promise(r=>setTimeout(r,2000));
 await p.screenshot({path:`${OUT}/m4-energy.png`});
-await p.evaluate(()=>[...document.querySelectorAll('button')].find(b=>b.textContent.includes('Volver al museo'))?.click());
+await p.evaluate(()=>[...document.querySelectorAll('button')].find(b=>b.textContent.includes('Back to the museum'))?.click());
 await new Promise(r=>setTimeout(r,1200));
 
 await p.evaluate(h=>scrollTo(0,h*5), vh);

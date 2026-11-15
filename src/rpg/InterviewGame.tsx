@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Artifact } from '../data/artifacts';
-import { CATEGORY_LABEL, INTERVIEWS, type Question } from './interviews';
+import { CATEGORY_LABEL, interviewsFor, type Question } from './interviews';
 import { recordInterview } from './catalog';
 import { Portrait } from './Portrait';
 import { InterviewScene } from './InterviewScene';
 import { isSoundOn, primeBlip, resumeBlip, setSoundOn } from './blip';
 import { useTypewriter } from './useTypewriter';
+import { useLang } from '../i18n/lang';
+import { uiFor } from '../i18n/ui';
 
 type Phase = 'intro' | 'asking' | 'answering' | 'silent' | 'entry';
 
@@ -17,14 +19,16 @@ interface InterviewGameProps {
 }
 
 export function InterviewGame({ artifact, reduced, onClose, onCatalog }: InterviewGameProps) {
-  const interview = INTERVIEWS[artifact.id];
+  const { lang } = useLang();
+  const t = uiFor(lang);
+  const interview = interviewsFor(lang)[artifact.id];
   const rootRef = useRef<HTMLDivElement>(null);
 
   const [phase, setPhase] = useState<Phase>('intro');
   const [line, setLine] = useState(0);
   const [signal, setSignal] = useState(interview.signal);
   const [asked, setAsked] = useState<string[]>([]);
-  const [fragments, setFragments] = useState<string[]>([]);
+  const [fragmentIds, setFragmentIds] = useState<string[]>([]);
   const [current, setCurrent] = useState<Question | null>(null);
   const [lastAnswer, setLastAnswer] = useState('');
   const [sound, setSound] = useState(() => isSoundOn());
@@ -37,8 +41,8 @@ export function InterviewGame({ artifact, reduced, onClose, onCatalog }: Intervi
         : phase === 'silent'
           ? interview.silence
           : phase === 'asking'
-            ? '¿Qué le preguntas? Cada pregunta gasta una unidad de señal.'
-            : 'Se acabó el enlace.';
+            ? t.asking
+            : t.linkOver;
 
   const { shown, done, skip } = useTypewriter(text);
 
@@ -61,8 +65,8 @@ export function InterviewGame({ artifact, reduced, onClose, onCatalog }: Intervi
 
   useEffect(() => {
     if (phase !== 'entry') return;
-    recordInterview(artifact.id, fragments, asked.length);
-  }, [phase, artifact.id, fragments, asked.length]);
+    recordInterview(artifact.id, fragmentIds, asked.length);
+  }, [phase, artifact.id, fragmentIds, asked.length]);
 
   const advance = useCallback(() => {
     if (!done) {
@@ -90,7 +94,7 @@ export function InterviewGame({ artifact, reduced, onClose, onCatalog }: Intervi
     setLastAnswer(question.answer);
     setAsked((previous) => [...previous, question.id]);
     setSignal((value) => value - 1);
-    if (question.fragment) setFragments((previous) => [...previous, question.fragment!.text]);
+    if (question.fragment) setFragmentIds((previous) => [...previous, question.id]);
     setPhase('answering');
   };
 
@@ -99,7 +103,7 @@ export function InterviewGame({ artifact, reduced, onClose, onCatalog }: Intervi
     setLine(0);
     setSignal(interview.signal);
     setAsked([]);
-    setFragments([]);
+    setFragmentIds([]);
     setCurrent(null);
     setLastAnswer('');
   };
@@ -134,19 +138,19 @@ export function InterviewGame({ artifact, reduced, onClose, onCatalog }: Intervi
       className="game interview"
       role="dialog"
       aria-modal="true"
-      aria-label={`Entrevista con ${interview.speaker}`}
+      aria-label={t.interviewAria(interview.speaker)}
       tabIndex={-1}
       ref={rootRef}
     >
       <header className="game-bar">
         <div>
-          <p className="game-kicker">Entrevista · señal {signal}/4</p>
+          <p className="game-kicker">{t.interviewKicker(signal)}</p>
           <h2 className="game-title">{interview.speaker}</h2>
           <p className="interview-subtitle">{interview.subtitle}</p>
         </div>
 
         <div className="interview-actions">
-          <div className="pips" role="img" aria-label={`${signal} de 4 unidades de señal`}>
+          <div className="pips" role="img" aria-label={t.pipsAria(signal)}>
             {Array.from({ length: interview.signal }).map((_, i) => (
               <span key={i} className={i < signal ? 'is-on' : ''} />
             ))}
@@ -155,18 +159,19 @@ export function InterviewGame({ artifact, reduced, onClose, onCatalog }: Intervi
             type="button"
             className="ghost-button sound-toggle"
             aria-pressed={sound}
-            aria-label={`Sonido de escritura ${sound ? 'activado' : 'desactivado'}`}
+            aria-label={sound ? t.soundAriaOn : t.soundAriaOff}
             onClick={() => {
               const next = !sound;
               setSound(next);
               setSoundOn(next);
             }}
           >
-            <span className="sound-toggle-label">Sonido</span>{' '}
-            {sound ? 'on' : 'off'}
+            <span className="sound-toggle-label">{t.soundWord}</span>{' '}
+            <span className="sound-toggle-short">{t.soundShort}</span>{' '}
+            {sound ? t.soundOnState : t.soundOffState}
           </button>
           <button type="button" className="ghost-button" onClick={onClose}>
-            Volver al museo
+            {t.backToMuseum}
           </button>
         </div>
       </header>
@@ -184,7 +189,7 @@ export function InterviewGame({ artifact, reduced, onClose, onCatalog }: Intervi
 
         <div className="interview-content">
           <p className="interview-speaker">
-            {phase === 'asking' ? 'Tú' : interview.speaker}
+            {phase === 'asking' ? t.you : interview.speaker}
           </p>
           <p className="interview-line">
             {shown}
@@ -198,7 +203,7 @@ export function InterviewGame({ artifact, reduced, onClose, onCatalog }: Intervi
                   <button type="button" className="choice" onClick={() => ask(question)}>
                     <span className="choice-key">{index + 1}</span>
                     <span className="choice-body">
-                      <span className="choice-cat">{CATEGORY_LABEL[question.category]}</span>
+                      <span className="choice-cat">{CATEGORY_LABEL[lang][question.category]}</span>
                       <span className="choice-label">{question.label}</span>
                     </span>
                   </button>
@@ -211,32 +216,35 @@ export function InterviewGame({ artifact, reduced, onClose, onCatalog }: Intervi
             <div className="entry">
               <p className="entry-title">{interview.entryTitle}</p>
               <p className="entry-count">
-                Preguntaste {asked.length} de {interview.questions.length}. Recuperaste{' '}
-                {fragments.length} de{' '}
-                {interview.questions.filter((q) => q.fragment).length} fragmentos.
+                {t.entryCount(
+                  asked.length,
+                  interview.questions.length,
+                  fragmentIds.length,
+                  interview.questions.filter((q) => q.fragment).length,
+                )}
               </p>
 
-              {fragments.length > 0 ? (
+              {fragmentIds.length > 0 ? (
                 <ul className="entry-fragments">
-                  {fragments.map((fragment) => (
-                    <li key={fragment}>{fragment}</li>
+                  {fragmentIds.map((id) => (
+                    <li key={id}>
+                      {interview.questions.find((q) => q.id === id)?.fragment?.text ?? id}
+                    </li>
                   ))}
                 </ul>
               ) : (
-                <p className="entry-empty">
-                  No alcanzaste a recuperar nada. Lo que no se pregunta, se pierde.
-                </p>
+                <p className="entry-empty">{t.entryEmpty}</p>
               )}
 
               <div className="entry-actions">
                 <button type="button" className="game-cta" onClick={reconnect}>
-                  Volver a conectar
+                  {t.reconnect}
                 </button>
                 <button type="button" className="ghost-button" onClick={onCatalog}>
-                  Ver catálogo
+                  {t.viewCatalog}
                 </button>
                 <button type="button" className="ghost-button" onClick={onClose}>
-                  Volver al museo
+                  {t.backToMuseum}
                 </button>
               </div>
             </div>
@@ -246,7 +254,7 @@ export function InterviewGame({ artifact, reduced, onClose, onCatalog }: Intervi
 
       {phase !== 'entry' && (
         <p className="interview-hint" aria-hidden="true">
-          {phase === 'asking' ? 'Elige una pregunta · teclas 1-7' : 'Clic o Espacio para continuar'}
+          {phase === 'asking' ? t.hintAsking : t.hintContinue}
         </p>
       )}
     </div>

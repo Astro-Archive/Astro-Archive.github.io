@@ -57,11 +57,11 @@ console.log('EAGLE', JSON.stringify(eagle));
 await page.screenshot({ path: `${OUT}/1-eagle-card.png` });
 
 // --- minijuego de descenso
-await click('Intentar el aterrizaje');
+await click('Attempt the landing');
 await new Promise((r) => setTimeout(r, 2500));
 await page.screenshot({ path: `${OUT}/2-descent-start.png` });
 
-await click('Empezar el descenso');
+await click('Start the descent');
 await new Promise((r) => setTimeout(r, 4000));
 await page.keyboard.down('Space');
 await new Promise((r) => setTimeout(r, 6000));
@@ -74,7 +74,7 @@ const hud = await page.evaluate(() => ({
 }));
 console.log('HUD', JSON.stringify(hud));
 
-await click('Volver al museo');
+await click('Back to the museum');
 await new Promise((r) => setTimeout(r, 1200));
 
 // --- estación 2: Opportunity
@@ -85,13 +85,13 @@ const opp = await page.evaluate(() => ({
 }));
 console.log('OPP', JSON.stringify(opp));
 
-await click('Repartir la energía');
+await click('Share the power');
 await new Promise((r) => setTimeout(r, 2000));
 await page.screenshot({ path: `${OUT}/4-energy-start.png` });
 
-await click('Calentar la batería');
-await click('Tomar una medición');
-await click('Transmitir a la Tierra');
+await click('Warm the battery');
+await click('Take a measurement');
+await click('Transmit to Earth');
 await new Promise((r) => setTimeout(r, 800));
 await page.screenshot({ path: `${OUT}/5-energy-playing.png` });
 
@@ -102,12 +102,12 @@ const energy = await page.evaluate(() => ({
 }));
 console.log('ENERGY', JSON.stringify(energy));
 
-await click('Terminar el sol');
+await click('End the sol');
 await new Promise((r) => setTimeout(r, 800));
 const sol2 = await page.evaluate(() => document.querySelector('.energy-sol')?.textContent?.trim() ?? null);
 console.log('SOL2', JSON.stringify(sol2));
 
-await click('Volver al museo');
+await click('Back to the museum');
 await new Promise((r) => setTimeout(r, 1200));
 
 // --- epílogo

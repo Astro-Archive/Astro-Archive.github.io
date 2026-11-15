@@ -63,7 +63,7 @@ await wait(2600);
 
 await p.evaluate(() => {
   [...document.querySelectorAll('button')]
-    .find((x) => x.textContent?.includes('Conectar con la máquina'))
+    .find((x) => x.textContent?.includes('Connect with the machine'))
     ?.click();
 });
 await wait(2600);
@@ -102,7 +102,7 @@ console.log('ENTRADA', JSON.stringify(entryPanel));
 await p.screenshot({ path: `${OUT}/4-entry.png` });
 
 await p.evaluate(() => {
-  [...document.querySelectorAll('button')].find((x) => x.textContent?.includes('Ver catálogo'))?.click();
+  [...document.querySelectorAll('button')].find((x) => x.textContent?.includes('View catalog'))?.click();
 });
 await wait(2200);
 

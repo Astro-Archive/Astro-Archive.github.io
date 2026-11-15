@@ -1,4 +1,6 @@
-import { EPILOGUE } from '../data/epilogue';
+import { epilogueFor } from '../data/epilogue';
+import { useLang } from '../i18n/lang';
+import { uiFor } from '../i18n/ui';
 
 interface EpilogueProps {
   visible: boolean;
@@ -7,21 +9,25 @@ interface EpilogueProps {
 }
 
 export function Epilogue({ visible, onRestart, onReading }: EpilogueProps) {
+  const { lang } = useLang();
+  const t = uiFor(lang);
+  const epilogue = epilogueFor(lang);
+
   return (
     <section className={`epilogue ${visible ? 'is-visible' : ''}`} aria-hidden={!visible} inert={!visible}>
       <div className="epilogue-inner">
-        <p className="epilogue-kicker">Epílogo</p>
+        <p className="epilogue-kicker">{t.epilogueKicker}</p>
 
-        <h2 className="epilogue-title">{EPILOGUE.title}</h2>
+        <h2 className="epilogue-title">{epilogue.title}</h2>
 
         <div className="epilogue-text">
-          {EPILOGUE.paragraphs.map((paragraph) => (
+          {epilogue.paragraphs.map((paragraph) => (
             <p key={paragraph.slice(0, 24)}>{paragraph}</p>
           ))}
         </div>
 
         <div className="epilogue-stats">
-          {EPILOGUE.stats.map((stat) => (
+          {epilogue.stats.map((stat) => (
             <div key={stat.label}>
               <span className="epilogue-number">{stat.value}</span>
               <span className="epilogue-label">{stat.label}</span>
@@ -31,17 +37,14 @@ export function Epilogue({ visible, onRestart, onReading }: EpilogueProps) {
 
         <div className="epilogue-actions">
           <button type="button" className="game-cta" onClick={onRestart}>
-            Volver al principio
+            {t.restart}
           </button>
           <button type="button" className="ghost-button" onClick={onReading}>
-            Leer sin 3D
+            {t.readWithout3d}
           </button>
         </div>
 
-        <p className="epilogue-credit">
-          Modelos 3D: NASA 3D Resources · Datos: NSSDCA y NASA Science · NASA no patrocina ni
-          respalda este proyecto.
-        </p>
+        <p className="epilogue-credit">{t.epilogueCredit}</p>
       </div>
     </section>
   );

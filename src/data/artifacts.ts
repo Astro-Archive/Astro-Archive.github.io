@@ -1,4 +1,6 @@
 import type { TerrainKind } from '../lib/noise';
+import type { Lang } from '../i18n/types';
+import { ARTIFACT_TEXT_EN } from './artifacts.en';
 
 export type SignalStatus = 'durmiente' | 'silencioso' | 'perdido';
 
@@ -265,3 +267,13 @@ export const ARTIFACTS: Artifact[] = [
 ];
 
 export const ARTIFACT_COUNT = ARTIFACTS.length;
+
+/** El español vive en ARTIFACTS; el inglés se superpone encima sin duplicar la estructura. */
+export const ARTIFACTS_EN: Artifact[] = ARTIFACTS.map((artifact) => ({
+  ...artifact,
+  ...ARTIFACT_TEXT_EN[artifact.id],
+}));
+
+export function artifactsFor(lang: Lang): Artifact[] {
+  return lang === 'es' ? ARTIFACTS : ARTIFACTS_EN;
+}

@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { ArtifactModel } from '../scene/ArtifactModel';
+import { useLang } from '../i18n/lang';
+import { uiFor } from '../i18n/ui';
 import {
   createSim,
   step,
@@ -10,6 +12,7 @@ import {
   START_VY,
   type Input,
   type Outcome,
+  type Reason,
   type Sim,
 } from './descentPhysics';
 
@@ -136,6 +139,8 @@ function Bar({ value, color }: { value: number; color: string }) {
 /* ---------- juego ---------- */
 
 export function DescentGame({ onClose }: { onClose: () => void }) {
+  const { lang } = useLang();
+  const t = uiFor(lang);
   const rootRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     rootRef.current?.focus();
@@ -144,10 +149,16 @@ export function DescentGame({ onClose }: { onClose: () => void }) {
   const sim = useRef<Sim>(createSim(7));
   const input = useRef<Input>({ thrust: false, left: false, right: false });
   const [started, setStarted] = useState(false);
-  const [result, setResult] = useState<{ outcome: Outcome; reason: string; fuel: number }>({
+  const [result, setResult] = useState<{
+    outcome: Outcome;
+    reason: Reason | null;
+    fuel: number;
+    impact: number;
+  }>({
     outcome: 'flying',
-    reason: '',
+    reason: null,
     fuel: 1,
+    impact: 0,
   });
   const [hud, setHud] = useState({ y: START_ALT, vy: START_VY, x: 7, vx: 0, fuel: 1 });
 
@@ -210,7 +221,7 @@ export function DescentGame({ onClose }: { onClose: () => void }) {
         const s = sim.current;
         setHud({ y: s.y, vy: s.vy, x: s.x, vx: s.vx, fuel: s.fuel });
         if (s.outcome !== 'flying') {
-          setResult({ outcome: s.outcome, reason: s.reason, fuel: s.fuel });
+          setResult({ outcome: s.outcome, reason: s.reason, fuel: s.fuel, impact: s.impact });
         }
       }
       raf = requestAnimationFrame(loop);
@@ -222,7 +233,7 @@ export function DescentGame({ onClose }: { onClose: () => void }) {
   const restart = () => {
     sim.current = createSim(Math.random() > 0.5 ? 7 : -7);
     input.current = { thrust: false, left: false, right: false };
-    setResult({ outcome: 'flying', reason: '', fuel: 1 });
+    setResult({ outcome: 'flying', reason: null, fuel: 1, impact: 0 });
     setHud({ y: START_ALT, vy: START_VY, x: sim.current.x, vx: 0, fuel: 1 });
     setStarted(true);
   };
@@ -230,9 +241,17 @@ export function DescentGame({ onClose }: { onClose: () => void }) {
   const fuelPct = Math.round(hud.fuel * 100);
   const lowFuel = hud.fuel < 0.2;
   const playing = started && result.outcome === 'flying';
+  const reasonText =
+    result.reason === 'outside'
+      ? t.reasonOutside
+      : result.reason === 'hard'
+        ? t.reasonHard(result.impact.toFixed(1))
+        : result.reason === 'soft'
+          ? t.reasonSoft(result.impact.toFixed(1))
+          : '';
 
   return (
-    <div className="game" role="dialog" aria-modal="true" aria-label="Simulador de descenso lunar"
+    <div className="game" role="dialog" aria-modal="true" aria-label={t.descentAria}
       tabIndex={-1}
       ref={rootRef}>
       <div className="game-stage">
@@ -248,37 +267,37 @@ export function DescentGame({ onClose }: { onClose: () => void }) {
 
       <header className="game-bar">
         <div>
-          <p className="game-kicker">Simulación simplificada</p>
-          <h2 className="game-title">Descenso lunar</h2>
+          <p className="game-kicker">{t.descentKicker}</p>
+          <h2 className="game-title">{t.descentTitle}</h2>
         </div>
         <button type="button" className="ghost-button" onClick={onClose}>
-          Volver al museo
+          {t.backToMuseum}
         </button>
       </header>
 
       {started && (
         <div className="game-hud">
           <div className="hud-row">
-            <span className="hud-label">Altitud</span>
+            <span className="hud-label">{t.altitude}</span>
             <span className="hud-value">{Math.max(0, hud.y).toFixed(0)} m</span>
           </div>
           <div className="hud-row">
-            <span className="hud-label">Vertical</span>
+            <span className="hud-label">{t.vertical}</span>
             <span className={`hud-value ${hud.vy < -8 ? 'is-danger' : ''}`}>{hud.vy.toFixed(1)} m/s</span>
           </div>
           <div className="hud-row">
-            <span className="hud-label">Deriva</span>
+            <span className="hud-label">{t.drift}</span>
             <span className={`hud-value ${Math.abs(hud.x) > PAD - 1 ? 'is-danger' : ''}`}>
               {hud.x > 0 ? '+' : ''}
               {hud.x.toFixed(1)} m
             </span>
           </div>
           <div className="hud-row">
-            <span className="hud-label">Lateral</span>
+            <span className="hud-label">{t.lateral}</span>
             <span className="hud-value">{hud.vx.toFixed(1)} m/s</span>
           </div>
           <div className="hud-row">
-            <span className="hud-label">{lowFuel ? 'Combustible bajo' : 'Combustible'}</span>
+            <span className="hud-label">{lowFuel ? t.lowFuel : t.fuel}</span>
             <span className={`hud-value ${lowFuel ? 'is-danger' : ''}`}>{fuelPct} %</span>
           </div>
           <Bar value={hud.fuel} color={lowFuel ? '#ff6b35' : '#4fd1c5'} />
@@ -286,14 +305,14 @@ export function DescentGame({ onClose }: { onClose: () => void }) {
       )}
 
       {playing && (
-        <div className="game-controls" aria-label="Controles">
+        <div className="game-controls" aria-label={t.controlsAria}>
           <button
             type="button"
             className="ctrl"
             onPointerDown={() => press('left', true)}
             onPointerUp={() => press('left', false)}
             onPointerLeave={() => press('left', false)}
-            aria-label="Empujar a la izquierda"
+            aria-label={t.pushLeft}
           >
             ←
           </button>
@@ -303,9 +322,9 @@ export function DescentGame({ onClose }: { onClose: () => void }) {
             onPointerDown={() => press('thrust', true)}
             onPointerUp={() => press('thrust', false)}
             onPointerLeave={() => press('thrust', false)}
-            aria-label="Encender el motor"
+            aria-label={t.turnEngineOn}
           >
-            MOTOR
+            {t.engineWord}
           </button>
           <button
             type="button"
@@ -313,7 +332,7 @@ export function DescentGame({ onClose }: { onClose: () => void }) {
             onPointerDown={() => press('right', true)}
             onPointerUp={() => press('right', false)}
             onPointerLeave={() => press('right', false)}
-            aria-label="Empujar a la derecha"
+            aria-label={t.pushRight}
           >
             →
           </button>
@@ -322,57 +341,44 @@ export function DescentGame({ onClose }: { onClose: () => void }) {
 
       {!started && (
         <div className="game-panel">
-          <p className="game-lead">
-            Estás a 70 metros sobre el Mar de la Tranquilidad. Baja a menos de 1,5 m/s y dentro del
-            círculo.
-          </p>
+          <p className="game-lead">{t.descentLead}</p>
           <ul className="game-list">
             <li>
-              <strong>MOTOR</strong> o la barra espaciadora para frenar. Consume combustible.
+              <strong>{t.engineWord}</strong> {t.tipThrustRest}
             </li>
             <li>
-              <strong>← →</strong> para corregir la deriva.
+              <strong>{t.tipDriftPre}</strong> {t.tipDriftRest}
             </li>
-            <li>La gravedad lunar es 1,62 m/s²: seis veces menos que en la Tierra.</li>
+            <li>{t.tipGravity}</li>
           </ul>
           <button type="button" className="game-cta" onClick={() => setStarted(true)}>
-            Empezar el descenso
+            {t.startDescent}
           </button>
-          <p className="game-foot">Unos 20 segundos. Se puede repetir.</p>
+          <p className="game-foot">{t.descentFoot}</p>
         </div>
       )}
 
       {started && result.outcome !== 'flying' && (
         <div className={`game-panel game-result ${result.outcome === 'won' ? 'is-win' : 'is-loss'}`}>
-          <p className="game-kicker">{result.outcome === 'won' ? 'Aterrizaje' : 'Impacto'}</p>
+          <p className="game-kicker">{result.outcome === 'won' ? t.landing : t.impact}</p>
           <h3 className="game-result-title">
-            {result.outcome === 'won' ? 'Tocaste suave.' : 'No llegaste.'}
+            {result.outcome === 'won' ? t.touchedDown : t.didNotMakeIt}
           </h3>
-          <p className="game-lead">{result.reason}</p>
+          <p className="game-lead">{reasonText}</p>
 
           {result.outcome === 'won' && (
             <>
-              <p className="game-lead">
-                Te quedó el <strong>{Math.round(result.fuel * 100)} %</strong> del combustible. En el
-                Apolo 11 quedaba el <strong>4,2 %</strong>: 770 libras de 18.184. Los análisis
-                posteriores calcularon que era combustible para unos 45 segundos de vuelo, y 20 de
-                esos segundos estaban reservados para abortar.
-              </p>
-              <p className="game-lesson">
-                Y aquí está la clave del artefacto: aunque te hubiera quedado el 100 %,{' '}
-                <strong>no habrías podido despegar</strong>. Volver a la órbita lunar necesitaba otro
-                motor y otro tanque. Por eso la etapa de descenso se quedó en la Luna: no se averió,
-                no podía subir.
-              </p>
+              <p className="game-lead">{t.wonFuel(Math.round(result.fuel * 100))}</p>
+              <p className="game-lesson">{t.wonLesson}</p>
             </>
           )}
 
           <div className="game-actions">
             <button type="button" className="game-cta" onClick={restart}>
-              Repetir
+              {t.retry}
             </button>
             <button type="button" className="ghost-button" onClick={onClose}>
-              Volver al museo
+              {t.backToMuseum}
             </button>
           </div>
         </div>

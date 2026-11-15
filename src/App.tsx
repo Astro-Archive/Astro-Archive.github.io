@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { useProgress } from '@react-three/drei';
-import { ARTIFACTS, ARTIFACT_COUNT, type GameId } from './data/artifacts';
+import { ARTIFACT_COUNT, artifactsFor, type GameId } from './data/artifacts';
 import { Experience } from './scene/Experience';
 import { cameraT, usePrefersReducedMotion, useScroll, hasWebGL } from './lib/useScroll';
 import { ChapterCard } from './ui/ChapterCard';
@@ -9,6 +9,9 @@ import { Timeline } from './ui/Timeline';
 import { ReadingMode } from './ui/ReadingMode';
 import { Loader } from './ui/Loader';
 import { Epilogue } from './ui/Epilogue';
+import { LanguageSwitch } from './ui/LanguageSwitch';
+import { useLang } from './i18n/lang';
+import { uiFor } from './i18n/ui';
 import { DescentGame } from './game/DescentGame';
 import { EnergyGame } from './game/EnergyGame';
 import { InterviewGame } from './rpg/InterviewGame';
@@ -21,6 +24,9 @@ const EPILOGUE_AT = 4.6; // índice de paso, no progreso: la ficha de Dawn queda
 const OTHER_PROJECT_URL = 'https://astroarchive.earth/astro-archive/';
 
 export default function App() {
+  const { lang } = useLang();
+  const t = uiFor(lang);
+  const artifacts = artifactsFor(lang);
   const { ref, progress, scaled, station, card, goTo } = useScroll(ARTIFACT_COUNT);
   const prefersReduced = usePrefersReducedMotion();
   // ?capture fuerza cámara seca: sirve para grabar frames deterministas.
@@ -78,7 +84,7 @@ export default function App() {
   const heroVisible = scaled < 0.5;
   const cardVisible = card !== null && scaled < EPILOGUE_AT && !reading;
   const epilogueVisible = scaled >= EPILOGUE_AT && !reading && game === null;
-  const activeArtifact = ARTIFACTS[lastIndex.current];
+  const activeArtifact = artifacts[lastIndex.current];
   const overlayOpen = game !== null || interview !== null || catalogOpen || reading;
 
   const restart = () => {
@@ -141,7 +147,7 @@ export default function App() {
         <div className="brand">
           <span className="brand-dot" />
           <span className="brand-name">Still Listening</span>
-          <span className="brand-sub">Los que siguen escuchando</span>
+          <span className="brand-sub">{t.brandSub}</span>
         </div>
 
         <div className="hud-actions">
@@ -149,9 +155,9 @@ export default function App() {
             type="button"
             className="ghost-button"
             onClick={() => setCatalogOpen(true)}
-            aria-label={`Abrir catálogo de memoria, ${interviewed} de 4 artefactos entrevistados`}
+            aria-label={t.openCatalog(interviewed)}
           >
-            Catálogo {interviewed}/4
+            {t.catalog(interviewed)}
           </button>
           <button
             type="button"
@@ -159,34 +165,35 @@ export default function App() {
             onClick={() => setReading((value) => !value)}
             aria-pressed={reading}
           >
-            {reading ? 'Ver recorrido 3D' : 'Modo lectura'}
+            {reading ? t.readingOff : t.readingOn}
           </button>
+          <LanguageSwitch />
           <a
             className="ghost-button hud-external"
             href={OTHER_PROJECT_URL}
             target="_blank"
             rel="noreferrer noopener"
-            aria-label="Abrir el simulador interactivo"
+            aria-label={t.openSimulator}
           >
-            <span className="hud-external-label">Simulador interactivo</span>
+            <span className="hud-external-label">{t.simulator}</span>
             <span aria-hidden="true">↗</span>
           </a>
         </div>
       </header>
 
       <div className={`hero ${heroVisible && !reading ? 'is-visible' : ''}`} aria-hidden={!heroVisible}>
-        <p className="hero-kicker">2026 NASA Space Apps Challenge</p>
+        <p className="hero-kicker">{t.heroKicker}</p>
         <h1 className="hero-title">
           Still
           <br />
           Listening
         </h1>
         <p className="hero-sub">
-          Cuatro máquinas que ya no transmiten.
+          {t.heroLine1}
           <br />
-          Sus historias sí.
+          {t.heroLine2}
         </p>
-        <p className="hero-hint">Desliza para empezar el recorrido</p>
+        <p className="hero-hint">{t.heroHint}</p>
       </div>
 
       <ChapterCard
@@ -204,7 +211,7 @@ export default function App() {
 
       <Timeline station={station} progress={cameraT(progress, ARTIFACT_COUNT)} onSelect={goTo} />
 
-      <footer className="credits">Modelos: NASA 3D Resources · Datos: NSSDCA</footer>
+      <footer className="credits">{t.credits}</footer>
 
       </div>
 
@@ -215,7 +222,7 @@ export default function App() {
       {game === 'energy' && <EnergyGame onClose={closeGame} />}
       {interview && (
         <InterviewGame
-          artifact={ARTIFACTS.find((a) => a.id === interview) ?? ARTIFACTS[0]}
+          artifact={artifacts.find((a) => a.id === interview) ?? artifacts[0]}
           reduced={reduced}
           onClose={closeInterview}
           onCatalog={openCatalog}

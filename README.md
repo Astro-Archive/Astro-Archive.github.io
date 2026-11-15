@@ -37,6 +37,17 @@ emociona, el dato responde. Cada capítulo enlaza sus fuentes.
 | 03 | **Ingenuity** — helicóptero | Cráter Jezero, Marte | 2021–2024 |
 | 04 | **Dawn** — sonda de propulsión iónica | Órbita de Ceres | 2007–2018 |
 
+### Idiomas
+
+La app arranca en **inglés**. El selector **EN / ES** del HUD —y de los overlays—
+cambia todo el contenido: fichas, entrevistas, minijuegos, catálogo y modo lectura.
+La preferencia se guarda en `localStorage` (`still-listening:lang`).
+
+La estructura de cada artefacto y de cada entrevista se escribe una sola vez; el
+inglés se superpone desde `src/data/artifacts.en.ts` y `src/rpg/interviews.en.ts`.
+Los fragmentos del catálogo se guardan por id de pregunta, así que al cambiar de
+idioma se leen en el idioma activo (incluidos los guardados antiguos, que se migran).
+
 ---
 
 ## Cómo se usa
@@ -143,11 +154,18 @@ public/sfx/text-blip.mp3  blip de escritura del RPG
 scripts/check.mjs         verificación con Chromium headless (capturas + errores)
 scripts/sound.mjs         verifica el blip de escritura (toggle, MP3, silencio)
 src/
+  i18n/
+    lang.tsx              proveedor EN/ES, <html lang> y metadatos
+    ui.ts                 textos de interfaz en ambos idiomas
+    types.ts              tipo Lang
   data/artifacts.ts       todo el contenido: textos, fuentes, paletas, terreno y cámaras
+  data/artifacts.en.ts    textos en inglés superpuestos a la estructura
+  data/epilogue.ts        epílogo en ambos idiomas
   lib/noise.ts            ruido de valor + fBm + cráteres
   lib/useScroll.ts        progreso de scroll, reduced-motion, detección de WebGL
   rpg/
     interviews.ts         las 28 respuestas, con fuente
+    interviews.en.ts      las mismas respuestas en inglés
     catalog.ts            catálogo persistente (localStorage)
     InterviewGame.tsx     overlay de la entrevista
     InterviewScene.tsx    diorama low-poly del artefacto
@@ -172,6 +190,7 @@ src/
     Timeline.tsx          navegación inferior
     ReadingMode.tsx       versión artículo, sin 3D
     Epilogue.tsx          cierre: lo que estamos dejando ahora
+    LanguageSwitch.tsx    selector EN / ES persistente
     SignalMeter.tsx       medidor de señal
 ```
 

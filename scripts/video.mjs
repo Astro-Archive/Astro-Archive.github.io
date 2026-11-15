@@ -89,27 +89,27 @@ await shot(10); // portada
 await glide(0, S0, 8); // Eagle
 await shot(9);
 
-await click('Intentar el aterrizaje');
+await click('Attempt the landing');
 await wait(3200);
 await shot(6); // panel de inicio del juego
 
-await click('Empezar el descenso');
+await click('Start the descent');
 await wait(4200);
 await page.keyboard.down('Space');
 await wait(2600);
 await shot(8); // módulo encendiendo el motor
 await page.keyboard.up('Space');
 
-await click('Volver al museo');
+await click('Back to the museum');
 await wait(1800);
 
 await glide(S0, S1, 8); // Opportunity
 await shot(8);
 
-await click('Repartir la energía');
+await click('Share the power');
 await wait(2600);
 await shot(7); // juego de energía
-await click('Volver al museo');
+await click('Back to the museum');
 await wait(1600);
 
 await glide(S1, S2, 8); // Ingenuity

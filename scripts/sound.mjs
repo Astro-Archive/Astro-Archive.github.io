@@ -56,7 +56,7 @@ await wait(2600);
 let connect;
 for (const button of await p.$$('button')) {
   const text = await button.evaluate((el) => el.textContent ?? '');
-  if (text.includes('Conectar con la máquina')) connect = button;
+  if (text.includes('Connect with the machine')) connect = button;
 }
 await connect.click();
 await wait(3500);

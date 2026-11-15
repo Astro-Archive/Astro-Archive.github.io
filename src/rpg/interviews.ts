@@ -1,3 +1,6 @@
+import type { Lang } from '../i18n/types';
+import { INTERVIEW_TEXT_EN, type InterviewTextOverride } from './interviews.en';
+
 export type Category = 'ciencia' | 'fallo' | 'ultimas';
 
 export interface Fragment {
@@ -28,10 +31,9 @@ export interface Interview {
   silence: string;
 }
 
-export const CATEGORY_LABEL: Record<Category, string> = {
-  ciencia: 'Ciencia',
-  fallo: 'Fallo',
-  ultimas: 'Últimas horas',
+export const CATEGORY_LABEL: Record<Lang, Record<Category, string>> = {
+  en: { ciencia: 'Science', fallo: 'Failure', ultimas: 'Final hours' },
+  es: { ciencia: 'Ciencia', fallo: 'Fallo', ultimas: 'Últimas horas' },
 };
 
 /**
@@ -369,3 +371,37 @@ export const TOTAL_FRAGMENTS = Object.values(INTERVIEWS).reduce(
   (sum, interview) => sum + interview.questions.filter((q) => q.fragment).length,
   0,
 );
+
+function localize(base: Interview, text: InterviewTextOverride): Interview {
+  return {
+    ...base,
+    subtitle: text.subtitle,
+    entryTitle: text.entryTitle,
+    intro: text.intro,
+    silence: text.silence,
+    questions: base.questions.map((question) => {
+      const translated = text.questions[question.id];
+      if (!translated) return question;
+      return {
+        ...question,
+        label: translated.label,
+        answer: translated.answer,
+        fragment: question.fragment
+          ? { ...question.fragment, text: translated.fragment ?? question.fragment.text }
+          : undefined,
+      };
+    }),
+  };
+}
+
+/** La estructura y las fuentes viven en INTERVIEWS; el inglés se superpone. */
+export const INTERVIEWS_EN: Record<string, Interview> = Object.fromEntries(
+  Object.entries(INTERVIEWS).map(([id, base]) => {
+    const text = INTERVIEW_TEXT_EN[id];
+    return [id, text ? localize(base, text) : base];
+  }),
+);
+
+export function interviewsFor(lang: Lang): Record<string, Interview> {
+  return lang === 'es' ? INTERVIEWS : INTERVIEWS_EN;
+}

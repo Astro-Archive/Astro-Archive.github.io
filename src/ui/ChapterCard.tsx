@@ -1,5 +1,7 @@
 import type { Artifact, GameId } from '../data/artifacts';
 import { SignalMeter } from './SignalMeter';
+import { useLang } from '../i18n/lang';
+import { uiFor } from '../i18n/ui';
 
 interface ChapterCardProps {
   artifact: Artifact;
@@ -8,19 +10,22 @@ interface ChapterCardProps {
   onInterview: (artifactId: string) => void;
 }
 
-const GAME_LABEL: Record<GameId, { title: string; cta: string }> = {
-  descent: { title: 'Pilota el descenso', cta: 'Intentar el aterrizaje' },
-  energy: { title: 'El último invierno', cta: 'Repartir la energía' },
-};
-
-const BEATS: Array<{ key: keyof Artifact['facts']; label: string }> = [
-  { key: 'what', label: 'Qué es' },
-  { key: 'why', label: 'Por qué fue' },
-  { key: 'found', label: 'Qué encontró' },
-  { key: 'now', label: 'Qué es ahora' },
-];
-
 export function ChapterCard({ artifact, visible, onPlay, onInterview }: ChapterCardProps) {
+  const { lang } = useLang();
+  const t = uiFor(lang);
+
+  const GAME_LABEL: Record<GameId, { title: string; cta: string }> = {
+    descent: { title: t.gameTitleDescent, cta: t.gameCtaDescent },
+    energy: { title: t.gameTitleEnergy, cta: t.gameCtaEnergy },
+  };
+
+  const BEATS: Array<{ key: keyof Artifact['facts']; label: string }> = [
+    { key: 'what', label: t.factWhat },
+    { key: 'why', label: t.factWhy },
+    { key: 'found', label: t.factFound },
+    { key: 'now', label: t.factNow },
+  ];
+
   return (
     <aside
       className={`card ${visible ? 'is-visible' : ''}`}
@@ -46,7 +51,7 @@ export function ChapterCard({ artifact, visible, onPlay, onInterview }: ChapterC
 
         {artifact.game && (
           <div className="play-block">
-            <span className="play-tag">Minijuego · 20 segundos</span>
+            <span className="play-tag">{t.minigameTag}</span>
             <p className="play-title">{GAME_LABEL[artifact.game].title}</p>
             <button type="button" className="play-button" onClick={() => onPlay(artifact.game!)}>
               {GAME_LABEL[artifact.game].cta}
@@ -64,23 +69,23 @@ export function ChapterCard({ artifact, visible, onPlay, onInterview }: ChapterC
         </dl>
 
         <blockquote className="voice">
-          <span className="voice-tag">Voz ficcionalizada</span>
+          <span className="voice-tag">{t.voiceTag}</span>
           {artifact.voice}
         </blockquote>
 
         <button type="button" className="interview-button" onClick={() => onInterview(artifact.id)}>
-          Conectar con la máquina
+          {t.connect}
         </button>
 
         {artifact.note && (
           <p className="note">
-            <span className="note-tag">Ojo con el dato</span>
+            <span className="note-tag">{t.noteTag}</span>
             {artifact.note}
           </p>
         )}
 
         <div className="sources">
-          <span className="sources-title">Fuentes</span>
+          <span className="sources-title">{t.sources}</span>
           <ul>
             {artifact.sources.map((source) => (
               <li key={source.url}>

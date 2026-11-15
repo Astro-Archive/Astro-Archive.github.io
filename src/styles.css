@@ -114,6 +114,55 @@ body {
   gap: 8px;
 }
 
+/* Selector de idioma: dos radios reales dentro de una píldora */
+.lang-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin: 0;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.lang-option {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 8px;
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.lang-option input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.lang-option:hover {
+  color: var(--ink);
+}
+
+.lang-option.is-on {
+  color: #070a12;
+  background: var(--accent);
+}
+
+.lang-option:has(input:focus-visible) {
+  outline: 1px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .brand {
   display: grid;
   grid-template-columns: 8px auto;
@@ -980,6 +1029,22 @@ body {
   color: var(--muted);
 }
 
+.reading-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.game-bar-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .reading-body {
   max-width: 740px;
   margin: 0 auto;
@@ -1172,6 +1237,11 @@ body {
     display: none;
   }
 
+  /* con cuatro controles en el HUD la marca queda como punto */
+  .brand-name {
+    display: none;
+  }
+
   .hud-actions {
     gap: 6px;
   }
@@ -1180,6 +1250,11 @@ body {
     padding: 8px 10px;
     font-size: 9px;
     letter-spacing: 0.1em;
+  }
+
+  .lang-option {
+    padding: 6px;
+    font-size: 9px;
   }
 
   .hud-external-label {
@@ -2493,9 +2568,17 @@ body {
   }
 }
 
-/* En móvil el HUD de la entrevista lleva tres controles: "Sonido" queda en ON/OFF. */
+/* En móvil el HUD de la entrevista lleva tres controles: "Sonido" queda en SFX ON/OFF. */
+.sound-toggle-short {
+  display: none;
+}
+
 @media (max-width: 560px) {
   .sound-toggle-label {
     display: none;
+  }
+
+  .sound-toggle-short {
+    display: inline;
   }
 }

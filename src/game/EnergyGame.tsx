@@ -1,29 +1,27 @@
 import { useEffect, useRef, useState } from 'react';
+import { useLang } from '../i18n/lang';
+import { uiFor } from '../i18n/ui';
 
 /**
- * Presupuesto de energía de Opportunity durante la tormenta de 2018.
- * Los vatios-hora y el tau son los reales de cada sol.
- * No se puede ganar: la tormenta era más grande que cualquier presupuesto.
- * Lo que se juega es cuánta ciencia llega a casa antes del silencio.
+ * Power budget for Opportunity during the 2018 storm.
+ * Watt-hours and tau are the real values for each sol.
+ * It cannot be won: the storm was bigger than any budget.
+ * What is played is how much science gets home before the silence.
  */
 
 const SOLS = [
-  { label: 'Sol 5105', date: '3 de junio de 2018', wh: 468, tau: 1.0 },
-  { label: 'Sol 5106', date: '4 de junio de 2018', wh: 345, tau: 2.1 },
-  { label: 'Sol 5107', date: '6 de junio de 2018', wh: 133, tau: 3.0 },
-  { label: 'Sol 5111', date: '10 de junio de 2018', wh: 22, tau: 10.8 },
+  { label: 'Sol 5105', wh: 468, tau: 1.0 },
+  { label: 'Sol 5106', wh: 345, tau: 2.1 },
+  { label: 'Sol 5107', wh: 133, tau: 3.0 },
+  { label: 'Sol 5111', wh: 22, tau: 10.8 },
 ];
 
 const COST = { heat: 80, measure: 70, transmit: 90 } as const;
 type Action = keyof typeof COST;
 
-const ACTION_LABEL: Record<Action, string> = {
-  heat: 'Calentar la batería',
-  measure: 'Tomar una medición',
-  transmit: 'Transmitir a la Tierra',
-};
-
 export function EnergyGame({ onClose }: { onClose: () => void }) {
+  const { lang } = useLang();
+  const t = uiFor(lang);
   const rootRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     rootRef.current?.focus();
@@ -42,12 +40,18 @@ export function EnergyGame({ onClose }: { onClose: () => void }) {
   const left = budget - spent;
   const can = (action: Action) => left >= COST[action] && !used.includes(action);
 
+  const ACTION_LABEL: Record<Action, string> = {
+    heat: t.actionHeat,
+    measure: t.actionMeasure,
+    transmit: t.actionTransmit,
+  };
+
   const act = (action: Action) => {
     if (!can(action)) return;
     setUsed((u) => [...u, action]);
     if (action === 'measure') {
       setPending((p) => p + 1);
-      setLog((l) => [...l, `${SOLS[sol].label}: medición guardada en memoria.`]);
+      setLog((l) => [...l, t.logMeasured(SOLS[sol].label)]);
     }
     if (action === 'transmit') {
       const sending = pending;
@@ -55,13 +59,11 @@ export function EnergyGame({ onClose }: { onClose: () => void }) {
       setPending(0);
       setLog((l) => [
         ...l,
-        sending > 0
-          ? `${SOLS[sol].label}: ${sending} dato${sending > 1 ? 's' : ''} enviado${sending > 1 ? 's' : ''} a la Tierra.`
-          : `${SOLS[sol].label}: la antena se encendió, pero no había nada que enviar.`,
+        sending > 0 ? t.logTransmitted(SOLS[sol].label, sending) : t.logNothing(SOLS[sol].label),
       ]);
     }
     if (action === 'heat') {
-      setLog((l) => [...l, `${SOLS[sol].label}: batería caliente, los instrumentos aguantan.`]);
+      setLog((l) => [...l, t.logHeated(SOLS[sol].label)]);
     }
   };
 
@@ -86,40 +88,31 @@ export function EnergyGame({ onClose }: { onClose: () => void }) {
   if (over) {
     const total = sent + pending;
     return (
-      <div className="game game-energy" role="dialog" aria-modal="true" aria-label="El último invierno de Opportunity"
+      <div className="game game-energy" role="dialog" aria-modal="true" aria-label={t.energyAria}
       tabIndex={-1}
       ref={rootRef}>
         <header className="game-bar">
           <div>
-            <p className="game-kicker">Fin de la misión</p>
-            <h2 className="game-title">Silencio</h2>
+            <p className="game-kicker">{t.endKicker}</p>
+            <h2 className="game-title">{t.silenceTitle}</h2>
           </div>
           <button type="button" className="ghost-button" onClick={onClose}>
-            Volver al museo
+            {t.backToMuseum}
           </button>
         </header>
 
         <div className="game-panel game-result is-loss energy-result">
           <p className="game-result-title">
-            Enviaste <strong>{sent}</strong> de {Math.max(total, 1)} datos a casa.
+            {t.energyResultTitle(sent, Math.max(total, 1))}
           </p>
 
-          <p className="game-lead">
-            No había forma de ganar y eso es lo importante: la tormenta era más grande que cualquier
-            presupuesto de energía. Con 22 vatios-hora no se calienta una batería ni se enciende una
-            antena.
-          </p>
+          <p className="game-lead">{t.energyNoWay}</p>
 
-          <p className="game-lesson">
-            El 10 de junio de 2018, Opportunity transmitió por última vez. En ese mensaje iba una
-            medición: la opacidad de la atmósfera marciana había llegado a <strong>10,8</strong>, el
-            valor más alto jamás medido en Marte. La NASA la llamó más de mil veces durante ocho meses.
-            Nunca respondió.
-          </p>
+          <p className="game-lesson">{t.energyLesson}</p>
 
           <div className="game-actions">
             <button type="button" className="game-cta" onClick={onClose}>
-              Volver al capítulo
+              {t.backToChapter}
             </button>
           </div>
         </div>
@@ -130,16 +123,16 @@ export function EnergyGame({ onClose }: { onClose: () => void }) {
   const current = SOLS[sol];
 
   return (
-    <div className="game game-energy" role="dialog" aria-modal="true" aria-label="El último invierno de Opportunity"
+    <div className="game game-energy" role="dialog" aria-modal="true" aria-label={t.energyAria}
       tabIndex={-1}
       ref={rootRef}>
       <header className="game-bar">
         <div>
-          <p className="game-kicker">El último invierno</p>
-          <h2 className="game-title">Presupuesto de energía</h2>
+          <p className="game-kicker">{t.energyKicker}</p>
+          <h2 className="game-title">{t.energyTitle}</h2>
         </div>
         <button type="button" className="ghost-button" onClick={onClose}>
-          Volver al museo
+          {t.backToMuseum}
         </button>
       </header>
 
@@ -147,15 +140,11 @@ export function EnergyGame({ onClose }: { onClose: () => void }) {
         <div className="energy-sol">
           <div>
             <span className="energy-sol-label">{current.label}</span>
-            <span className="energy-date">{current.date}</span>
+            <span className="energy-date">{t.solDates[sol]}</span>
           </div>
           <div className="energy-numbers">
-            <span>
-              <strong>{left}</strong> Wh disponibles
-            </span>
-            <span>
-              opacidad <strong>{current.tau}</strong>
-            </span>
+            <span>{t.availableWh(left)}</span>
+            <span>{t.opacity(current.tau)}</span>
           </div>
         </div>
 
@@ -176,13 +165,13 @@ export function EnergyGame({ onClose }: { onClose: () => void }) {
 
         <div className="energy-state">
           <span>
-            Batería: <strong>{cold === 0 ? 'templada' : 'fría'}</strong>
+            {t.battery}: <strong>{cold === 0 ? t.warm : t.cold}</strong>
           </span>
           <span>
-            Datos sin enviar: <strong>{pending}</strong>
+            {t.unsent}: <strong>{pending}</strong>
           </span>
           <span>
-            Enviados: <strong>{sent}</strong>
+            {t.sent}: <strong>{sent}</strong>
           </span>
         </div>
 
@@ -193,13 +182,10 @@ export function EnergyGame({ onClose }: { onClose: () => void }) {
         </div>
 
         <button type="button" className="game-cta" onClick={endSol}>
-          Terminar el sol
+          {t.endSol}
         </button>
 
-        <p className="game-foot">
-          Si pasas un sol sin calentar la batería, el frío la daña. Dos soles seguidos y la misión
-          termina.
-        </p>
+        <p className="game-foot">{t.energyFoot}</p>
       </div>
     </div>
   );

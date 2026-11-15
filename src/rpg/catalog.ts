@@ -9,6 +9,7 @@ import { INTERVIEWS } from './interviews';
 const KEY = 'still-listening:catalog:v1';
 
 export interface Entry {
+  /** ids de pregunta con fragmento recuperado (antes eran textos) */
   fragments: string[];
   /** preguntas que llegó a hacer */
   asked: number;
@@ -18,13 +19,27 @@ export interface Entry {
 
 export type CatalogData = Record<string, Entry>;
 
+/** Guardados viejos: el texto en español se convierte al id de su pregunta. */
+const LEGACY_IDS: Record<string, string> = {};
+for (const interview of Object.values(INTERVIEWS)) {
+  for (const question of interview.questions) {
+    if (question.fragment) LEGACY_IDS[question.fragment.text] = question.id;
+  }
+}
+
 function read(): CatalogData {
   if (typeof window === 'undefined') return {};
   try {
     const raw = window.localStorage.getItem(KEY);
     if (!raw) return {};
     const parsed = JSON.parse(raw) as CatalogData;
-    return parsed && typeof parsed === 'object' ? parsed : {};
+    if (!parsed || typeof parsed !== 'object') return {};
+    for (const entry of Object.values(parsed)) {
+      if (entry && Array.isArray(entry.fragments)) {
+        entry.fragments = entry.fragments.map((fragment) => LEGACY_IDS[fragment] ?? fragment);
+      }
+    }
+    return parsed;
   } catch {
     return {};
   }

@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useLang } from '../i18n/lang';
+import { uiFor } from '../i18n/ui';
 
 /**
  * Retratos del RPG.
@@ -31,6 +33,8 @@ interface PortraitProps {
 }
 
 export function Portrait({ id, name, speaking = false }: PortraitProps) {
+  const { lang } = useLang();
+  const t = uiFor(lang);
   const [stage, setStage] = useState<Stage>('webp');
 
   const src = `rpg/portrait-${id}.${stage}`;
@@ -45,7 +49,7 @@ export function Portrait({ id, name, speaking = false }: PortraitProps) {
         <img
           key={stage}
           src={src}
-          alt={`Retrato de ${name}`}
+          alt={t.portraitAlt(name)}
           loading="lazy"
           decoding="async"
           onError={() => setStage(NEXT_STAGE[stage])}

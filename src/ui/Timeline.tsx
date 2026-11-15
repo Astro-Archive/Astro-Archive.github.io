@@ -1,4 +1,6 @@
-import { ARTIFACTS } from '../data/artifacts';
+import { artifactsFor } from '../data/artifacts';
+import { useLang } from '../i18n/lang';
+import { uiFor } from '../i18n/ui';
 
 interface TimelineProps {
   station: number;
@@ -7,14 +9,18 @@ interface TimelineProps {
 }
 
 export function Timeline({ station, progress, onSelect }: TimelineProps) {
+  const { lang } = useLang();
+  const t = uiFor(lang);
+  const artifacts = artifactsFor(lang);
+
   return (
-    <nav className="timeline" aria-label="Recorrido por los artefactos">
+    <nav className="timeline" aria-label={t.timelineAria}>
       <div className="timeline-track" aria-hidden="true">
         <span className="timeline-fill" style={{ transform: `scaleX(${progress})` }} />
       </div>
 
       <ul>
-        {ARTIFACTS.map((artifact, i) => (
+        {artifacts.map((artifact, i) => (
           <li key={artifact.id}>
             <button
               type="button"

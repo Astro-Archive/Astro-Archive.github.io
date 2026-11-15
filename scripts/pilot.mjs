@@ -32,7 +32,7 @@ await p.evaluate(() =>
 );
 await new Promise((r) => setTimeout(r, 1500));
 await p.evaluate(() =>
-  [...document.querySelectorAll('button')].find((x) => x.textContent.includes('Empezar'))?.click(),
+  [...document.querySelectorAll('button')].find((x) => x.textContent.includes('Start'))?.click(),
 );
 
 const read = () =>

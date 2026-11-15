@@ -62,7 +62,7 @@ await page.goto(URL, { waitUntil: 'networkidle2', timeout: 60000 });
 await new Promise((r) => setTimeout(r, 4000));
 await page.evaluate(() => {
   const buttons = Array.from(document.querySelectorAll('button'));
-  buttons.find((b) => b.textContent?.includes('Modo lectura'))?.click();
+  buttons.find((b) => b.textContent?.includes('Reading mode'))?.click();
 });
 await new Promise((r) => setTimeout(r, 1200));
 await page.screenshot({ path: `${OUT}/d-4-reading.png` });

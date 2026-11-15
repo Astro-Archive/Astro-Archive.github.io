@@ -1,8 +1,11 @@
 import { useEffect, useRef } from 'react';
-import { ARTIFACTS } from '../data/artifacts';
-import { INTERVIEWS } from './interviews';
+import { artifactsFor } from '../data/artifacts';
+import { interviewsFor } from './interviews';
 import { completedInterviews, fragmentsFor, resetCatalog, totalFragments, useCatalog } from './catalog';
 import { Portrait } from './Portrait';
+import { LanguageSwitch } from '../ui/LanguageSwitch';
+import { useLang } from '../i18n/lang';
+import { uiFor } from '../i18n/ui';
 
 interface CatalogProps {
   onClose: () => void;
@@ -10,6 +13,10 @@ interface CatalogProps {
 }
 
 export function Catalog({ onClose, onInterview }: CatalogProps) {
+  const { lang } = useLang();
+  const t = uiFor(lang);
+  const artifacts = artifactsFor(lang);
+  const interviews = interviewsFor(lang);
   const data = useCatalog();
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -31,32 +38,31 @@ export function Catalog({ onClose, onInterview }: CatalogProps) {
       className="game catalog"
       role="dialog"
       aria-modal="true"
-      aria-label="Catálogo de memoria"
+      aria-label={t.catalogAria}
       tabIndex={-1}
       ref={rootRef}
     >
       <header className="game-bar">
         <div>
-          <p className="game-kicker">Catálogo de memoria</p>
-          <h2 className="game-title">
-            {recovered} de {total} fragmentos
-          </h2>
-          <p className="interview-subtitle">
-            {done} de {ARTIFACTS.length} artefactos entrevistados
-          </p>
+          <p className="game-kicker">{t.catalogKicker}</p>
+          <h2 className="game-title">{t.catalogTitle(recovered, total)}</h2>
+          <p className="interview-subtitle">{t.catalogSubtitle(done, artifacts.length)}</p>
         </div>
-        <button type="button" className="ghost-button" onClick={onClose}>
-          Volver al museo
-        </button>
+        <div className="game-bar-actions">
+          <LanguageSwitch />
+          <button type="button" className="ghost-button" onClick={onClose}>
+            {t.backToMuseum}
+          </button>
+        </div>
       </header>
 
       <div className="catalog-body">
         <ul className="catalog-list">
-          {ARTIFACTS.map((artifact) => {
+          {artifacts.map((artifact) => {
             const entry = data[artifact.id];
             const found = entry?.fragments ?? [];
             const possible = fragmentsFor(artifact.id);
-            const interview = INTERVIEWS[artifact.id];
+            const interview = interviews[artifact.id];
 
             return (
               <li key={artifact.id} className={`catalog-item ${found.length > 0 ? 'is-found' : ''}`}>
@@ -64,18 +70,19 @@ export function Catalog({ onClose, onInterview }: CatalogProps) {
 
                 <div className="catalog-item-body">
                   <p className="catalog-item-name">{interview.entryTitle}</p>
-                  <p className="catalog-item-count">
-                    {found.length} de {possible} fragmentos
-                  </p>
+                  <p className="catalog-item-count">{t.catalogCount(found.length, possible)}</p>
 
                   {found.length > 0 ? (
                     <ul className="catalog-fragments">
-                      {found.map((fragment) => (
-                        <li key={fragment}>{fragment}</li>
+                      {found.map((fragmentId) => (
+                        <li key={fragmentId}>
+                          {interview.questions.find((q) => q.id === fragmentId)?.fragment?.text ??
+                            fragmentId}
+                        </li>
                       ))}
                     </ul>
                   ) : (
-                    <p className="catalog-empty">Aún no has conectado con esta máquina.</p>
+                    <p className="catalog-empty">{t.catalogEmpty}</p>
                   )}
 
                   <button
@@ -83,7 +90,7 @@ export function Catalog({ onClose, onInterview }: CatalogProps) {
                     className="catalog-connect"
                     onClick={() => onInterview(artifact.id)}
                   >
-                    {found.length > 0 ? 'Volver a conectar' : 'Conectar'}
+                    {found.length > 0 ? t.catalogReconnect : t.catalogConnect}
                   </button>
                 </div>
               </li>
@@ -92,18 +99,15 @@ export function Catalog({ onClose, onInterview }: CatalogProps) {
         </ul>
 
         <div className="catalog-footer">
-          <p>
-            Cada conversación gasta cuatro unidades de señal. Lo que no se pregunta no se puede
-            recuperar; el catálogo guarda lo que sí.
-          </p>
+          <p>{t.catalogFooter}</p>
           <button
             type="button"
             className="catalog-reset"
             onClick={() => {
-              if (window.confirm('¿Borrar todo el catálogo de memoria?')) resetCatalog();
+              if (window.confirm(t.catalogResetConfirm)) resetCatalog();
             }}
           >
-            Borrar progreso
+            {t.catalogReset}
           </button>
         </div>
       </div>

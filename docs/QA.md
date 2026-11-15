@@ -77,6 +77,21 @@ aunque el texto siga escribiéndose. La preferencia queda en `localStorage`. Lo 
 **no** cubre: salida de audio real (el servidor no tiene tarjeta de sonido) ni la
 política de autoplay de Safari.
 
+## 4 ter. Idiomas
+
+El sitio arranca en inglés; el selector EN/ES se comprueba con Chromium headless.
+
+| Comprobación | Resultado |
+|---|---|
+| `<html lang>` y `<title>` en inglés por defecto | ✓ |
+| El selector cambia fichas, entrevistas, juegos y lectura | ✓ |
+| La preferencia sobrevive a un reload | ✓ `still-listening:lang` |
+| Fragmentos guardados se leen en el idioma activo | ✓ ids de pregunta; los textos viejos se migran |
+| Errores de consola al cambiar | 0 |
+
+Lo que **no** cubre: revisión humana de todas las traducciones (el inglés se redactó
+a mano a partir del contenido en español) ni variantes regionales.
+
 ## 5. Balance de la física
 
 `scripts/balance.ts` simula estrategias con el **mismo módulo** que usa el juego
