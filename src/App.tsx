@@ -17,7 +17,7 @@ import { completedInterviews, useCatalog } from './rpg/catalog';
 
 const EPILOGUE_AT = 3.75; // índice de paso, no progreso
 
-// Otro proyecto: Astro Archive, el museo 3D hermano del mismo reto.
+// Simulador interactivo: Astro Archive, el museo 3D hermano del mismo reto.
 const OTHER_PROJECT_URL = 'https://astro-archive.github.io/astro-archive/';
 
 export default function App() {
@@ -166,9 +166,9 @@ export default function App() {
             href={OTHER_PROJECT_URL}
             target="_blank"
             rel="noreferrer noopener"
-            aria-label="Abrir el otro proyecto"
+            aria-label="Abrir el simulador interactivo"
           >
-            <span className="hud-external-label">Otro proyecto</span>
+            <span className="hud-external-label">Simulador interactivo</span>
             <span aria-hidden="true">↗</span>
           </a>
         </div>
