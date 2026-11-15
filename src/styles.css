@@ -2492,3 +2492,10 @@ body {
     gap: 10px;
   }
 }
+
+/* En móvil el HUD de la entrevista lleva tres controles: "Sonido" queda en ON/OFF. */
+@media (max-width: 560px) {
+  .sound-toggle-label {
+    display: none;
+  }
+}

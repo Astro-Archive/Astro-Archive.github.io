@@ -195,6 +195,19 @@ Nada de rigging. Cinco capas baratas que juntas se sienten caras:
 La última es la que se recuerda: **cuando se acaba la señal, la escena se apaga**.
 Todo detrás de `prefers-reduced-motion`.
 
+### Sonido de escritura
+
+`public/sfx/text-blip.mp3` (0,31 s) suena con cada carácter no blanco mientras el
+texto se escribe; al saltar la línea no suena nada. `src/rpg/blip.ts` lo decodifica
+una vez con Web Audio y limita la cadencia a un blip cada 75 ms, con ±4 % de tono,
+volumen 0,4 y un recorte de 90 ms (salta los ~48 ms de silencio inicial del MP3)
+para que no se solape consigo mismo ni se convierta en un zumbido.
+
+El botón **Sonido on/off** del HUD lo silencia y guarda la preferencia en
+`localStorage` (`still-listening:sfx`). El MP3 se descarga al abrir la entrevista y
+se desbloquea con el primer clic o tecla; si el navegador bloquea el audio, la
+entrevista sigue igual y el fallo es silencioso.
+
 ---
 
 ## 7. Fases

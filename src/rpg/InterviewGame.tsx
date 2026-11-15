@@ -4,6 +4,7 @@ import { CATEGORY_LABEL, INTERVIEWS, type Question } from './interviews';
 import { recordInterview } from './catalog';
 import { Portrait } from './Portrait';
 import { InterviewScene } from './InterviewScene';
+import { isSoundOn, primeBlip, resumeBlip, setSoundOn } from './blip';
 import { useTypewriter } from './useTypewriter';
 
 type Phase = 'intro' | 'asking' | 'answering' | 'silent' | 'entry';
@@ -26,6 +27,7 @@ export function InterviewGame({ artifact, reduced, onClose, onCatalog }: Intervi
   const [fragments, setFragments] = useState<string[]>([]);
   const [current, setCurrent] = useState<Question | null>(null);
   const [lastAnswer, setLastAnswer] = useState('');
+  const [sound, setSound] = useState(() => isSoundOn());
 
   const text =
     phase === 'intro'
@@ -42,6 +44,19 @@ export function InterviewGame({ artifact, reduced, onClose, onCatalog }: Intervi
 
   useEffect(() => {
     rootRef.current?.focus();
+  }, []);
+
+  // El MP3 se decodifica al abrir; el primer clic o tecla dentro de la
+  // entrevista desbloquea el audio si el navegador lo dejó suspendido.
+  useEffect(() => {
+    primeBlip();
+    const unlock = () => resumeBlip();
+    window.addEventListener('pointerdown', unlock, { once: true });
+    window.addEventListener('keydown', unlock, { once: true });
+    return () => {
+      window.removeEventListener('pointerdown', unlock);
+      window.removeEventListener('keydown', unlock);
+    };
   }, []);
 
   useEffect(() => {
@@ -136,6 +151,20 @@ export function InterviewGame({ artifact, reduced, onClose, onCatalog }: Intervi
               <span key={i} className={i < signal ? 'is-on' : ''} />
             ))}
           </div>
+          <button
+            type="button"
+            className="ghost-button sound-toggle"
+            aria-pressed={sound}
+            aria-label={`Sonido de escritura ${sound ? 'activado' : 'desactivado'}`}
+            onClick={() => {
+              const next = !sound;
+              setSound(next);
+              setSoundOn(next);
+            }}
+          >
+            <span className="sound-toggle-label">Sonido</span>{' '}
+            {sound ? 'on' : 'off'}
+          </button>
           <button type="button" className="ghost-button" onClick={onClose}>
             Volver al museo
           </button>

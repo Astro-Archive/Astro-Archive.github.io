@@ -100,6 +100,8 @@ entrada en el **catálogo de memoria**, que persiste entre visitas (`localStorag
 
 - 4 entrevistas × 7 preguntas = 28 respuestas, todas con fuente en `docs/DATOS.md`.
 - 16 fragmentos de catálogo, 4 por artefacto.
+- El texto se escribe a 26 ms/carácter con un blip por letra (`public/sfx/text-blip.mp3`);
+  el botón **Sonido on/off** del HUD lo silencia y recuerda la preferencia.
 - Los retratos son WebP generados con IA (masters JPG en `assets/retratos-fuente/`):
   el componente intenta `portrait-<id>.webp`, luego `.png` y cae al SVG sin tocar código.
 - Plan completo, dirección de arte y prompts: `docs/RPG.md`.
@@ -137,7 +139,9 @@ docs/DATOS.md             cada cifra con su fuente
 docs/QA.md                qué se verificó y qué no
 docs/GUION-VIDEO.md       guion del video de 100 s
 public/models/*.glb       4 modelos de NASA 3D Resources
+public/sfx/text-blip.mp3  blip de escritura del RPG
 scripts/check.mjs         verificación con Chromium headless (capturas + errores)
+scripts/sound.mjs         verifica el blip de escritura (toggle, MP3, silencio)
 src/
   data/artifacts.ts       todo el contenido: textos, fuentes, paletas, terreno y cámaras
   lib/noise.ts            ruido de valor + fBm + cráteres
@@ -147,6 +151,7 @@ src/
     catalog.ts            catálogo persistente (localStorage)
     InterviewGame.tsx     overlay de la entrevista
     InterviewScene.tsx    diorama low-poly del artefacto
+    blip.ts               blip de escritura (Web Audio + preferencia de sonido)
     Catalog.tsx           catálogo de memoria
   game/
     DescentGame.tsx       minijuego de descenso (overlay 3D)

@@ -66,6 +66,13 @@ Sin desbordamiento horizontal en ninguno de los dos (`scrollWidth <= innerWidth`
 | Catálogo: 4 filas, contador en el HUD | ✓ 1/4 | ✓ 1/4 |
 | Errores de consola | 0 | 0 |
 
+El blip de escritura se comprueba con `scripts/sound.mjs` en Chromium headless,
+contando los `AudioBufferSource` creados: 13–20 durante la primera línea,
+`sfx/text-blip.mp3` responde 200 y, tras pulsar **Sonido off**, el contador no sube
+aunque el texto siga escribiéndose. La preferencia queda en `localStorage`. Lo que
+**no** cubre: salida de audio real (el servidor no tiene tarjeta de sonido) ni la
+política de autoplay de Safari.
+
 ## 5. Balance de la física
 
 `scripts/balance.ts` simula estrategias con el **mismo módulo** que usa el juego

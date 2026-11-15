@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { playTextBlip } from './blip';
 
 /**
  * Texto progresivo. `skip` completa la línea; `done` indica que ya se mostró entera.
@@ -21,6 +22,8 @@ export function useTypewriter(text: string, speed = 26) {
     const id = window.setInterval(() => {
       i += 1;
       setCount(i);
+      // el blip suena con la letra, no con los espacios; el propio módulo limita la cadencia
+      if (text[i - 1] && !/\s/.test(text[i - 1])) playTextBlip();
       if (i >= text.length) window.clearInterval(id);
     }, speed);
     return () => window.clearInterval(id);
