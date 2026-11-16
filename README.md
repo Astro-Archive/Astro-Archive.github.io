@@ -1,277 +1,199 @@
-# Still Listening · Los que siguen escuchando
+# Still Listening · Those Who Still Listen
 
-> Cuatro máquinas que la NASA dejó en la Luna, en Marte y en el espacio profundo.
-> Ya no transmiten. Sus historias sí.
+> Four machines that NASA left on the Moon, on Mars, and in deep space.  
+> They no longer transmit. Their stories still do.
 
-Web app 3D interactiva para el **2026 NASA Space Apps Challenge**, reto
+An interactive 3D web experience built for the **2026 NASA Space Apps Challenge**, addressing the challenge:  
 *"Abandoned but not Forgotten: Storytelling about NASA's Discarded Equipment on the Moon and Mars"*.
 
-Público objetivo: **10 a 14 años** y aficionados casuales al espacio.
+Target audience: **Ages 10 to 14** and casual space enthusiasts worldwide.
 
 ---
 
-## Qué es
+## 👥 Development Team — Team Eclipse
 
-Un museo orbital que se recorre con scroll. La cámara viaja entre cuatro dioramas
-low-poly y cada artefacto es un capítulo con cuatro tiempos fijos:
+Developed with dedication and passion for the **2026 NASA Space Apps Challenge**:
 
-| Capa | Contenido |
+- **Leonardo Franco Vergaray Guarniz** ([@LeoFraaan](https://github.com/LeoFraaan))
+- **Giovanni Silva** ([@GiovanniSilva14](https://github.com/GiovanniSilva14))
+- **César Quiroz** ([@cesarquiroz9297](https://github.com/cesarquiroz9297))
+- **Jose Francisco Arce Gonzalez** ([@0xincainsider](https://github.com/0xincainsider))
+
+- **Event:** Universal Event — NASA Space Apps Challenge 2026
+- **Challenge:** *Abandoned but not Forgotten: Storytelling about NASA's Discarded Equipment on the Moon and Mars*
+
+---
+
+## What It Is
+
+An orbital museum traversed via interactive 3D navigation and timelines. The camera travels between four curated low-poly dioramas, where each machine is presented as a chapter structured into four distinct informational layers:
+
+| Layer | Content |
 |---|---|
-| **Qué es** | Masa, energía, instrumentos, año |
-| **Por qué fue** | La pregunta científica que iba a responder |
-| **Qué encontró** | El descubrimiento que cambió un libro de texto |
-| **Qué es ahora** | Última transmisión, estado, dónde descansa |
+| **What It Is** | Mass, power source, science instruments, launch & landing year |
+| **Why It Went** | The primary scientific questions it set out to answer |
+| **What It Found** | Groundbreaking discoveries that rewrote textbooks |
+| **What It Is Now** | Final transmission, status, and where it rests today |
 
-Más una **voz ficcionalizada** (monólogo en primera persona, siempre etiquetado como
-tal) y un **medidor de señal**: `activo → durmiente → silencioso → perdido`.
+Each chapter features a **fictionalized voice** (a first-person monologue, explicitly labeled as such) and a real-time **signal meter**: `active → dormant → silent → lost`.
 
-La separación explícita entre **HECHO** y **VOZ** es una decisión de diseño: el relato
-emociona, el dato responde. Cada capítulo enlaza sus fuentes.
+The strict boundary between **FACT** and **VOICE** is an intentional design choice: the narrative provides emotional connection, while verified telemetry and scientific records ground the facts. Each chapter cites its primary scientific sources.
 
-### Los cuatro artefactos
+### The Four Featured Relics
 
-| # | Artefacto | Lugar | Año |
+| # | Artifact | Location | Operational Span |
 |---|---|---|---|
-| 01 | **Eagle** — módulo lunar Apolo 11 (etapa de descenso) | Mar de la Tranquilidad, Luna | 1969 |
-| 02 | **Opportunity** — rover MER-B | Cráter Endeavour, Marte | 2004–2018 |
-| 03 | **Ingenuity** — helicóptero | Cráter Jezero, Marte | 2021–2024 |
-| 04 | **Dawn** — sonda de propulsión iónica | Órbita de Ceres | 2007–2018 |
+| 01 | **Eagle** — Apollo 11 Lunar Module (Descent Stage) | Sea of Tranquility, Moon | 1969 |
+| 02 | **Opportunity** — MER-B Rover | Endeavour Crater, Mars | 2004–2018 |
+| 03 | **Ingenuity** — Mars Helicopter | Jezero Crater, Mars | 2021–2024 |
+| 04 | **Dawn** — Ion-Propelled Spacecraft | Ceres Orbit | 2007–2018 |
 
-### Idiomas
+### Interactive Experiences & Minigames
 
-La app arranca en **inglés**. El selector **EN / ES** del HUD —y de los overlays—
-cambia todo el contenido: fichas, entrevistas, minijuegos, catálogo y modo lectura.
-La preferencia se guarda en `localStorage` (`still-listening:lang`).
-
-La estructura de cada artefacto y de cada entrevista se escribe una sola vez; el
-inglés se superpone desde `src/data/artifacts.en.ts` y `src/rpg/interviews.en.ts`.
-Los fragmentos del catálogo se guardan por id de pregunta, así que al cambiar de
-idioma se leen en el idioma activo (incluidos los guardados antiguos, que se migran).
-
----
-
-## Cómo se usa
-
-```bash
-bun install
-bun run dev      # http://localhost:5173
-bun run build    # genera dist/
-bun run preview
-```
-
-### Publicar
-
-`dist/` es estático y usa rutas relativas (`base: './'`), así que funciona en cualquier
-host, incluido un subdirectorio.
-
-- **Netlify**: arrastrar la carpeta `dist/` a `app.netlify.com/drop`.
-- **Vercel**: `npx vercel --prod` (o arrastrar `dist/`).
-- **GitHub Pages**: el workflow de `.github/workflows/deploy.yml` publica `main`.
-
-### Despliegue en astroarchive.earth
-
-Este repositorio es el **org site** de Astro Archive
-(`Astro-Archive/Astro-Archive.github.io`), así que GitHub Pages lo sirve en la raíz:
-**https://astroarchive.earth/**. El simulador sigue como project site en
-**https://astroarchive.earth/astro-archive/** y se abre desde el HUD.
-
-El workflow compila con `SITE_URL=https://astroarchive.earth/` cuando el repo es el
-org site; para cualquier otro nombre usa `https://astroarchive.earth/<repo>/`. La
-ruta antigua `/still-listening/` redirige a la raíz mediante
-`public/still-listening/index.html`.
-
-`public/_headers` aplica cache largo a los assets con hash y cabeceras de seguridad
-(Netlify lo copia a `dist/` en cada build).
-
-### Dominio propio (opcional)
-
-El dominio ya está configurado en el org site de GitHub Pages. Para una compilación
-local que genere Open Graph absolutos:
-
-```bash
-SITE_URL=https://tu-dominio.space bun run build
-```
-
-Sin la variable, el build funciona igual, pero `og:image` queda como ruta relativa.
-En Netlify, define `SITE_URL` en las variables de entorno del sitio.
-
-- **Scroll** para viajar entre estaciones.
-- **Timeline inferior** para saltar a un capítulo.
-- **← / →** navegación por teclado.
-- **Modo lectura** (arriba a la derecha): oculta el 3D y muestra todo como artículo.
-- **Esc** cierra el modo lectura.
-
-### Minijuegos
-
-Dos capítulos incluyen una mecánica de veinte segundos que se abre desde la ficha del
-artefacto y devuelve al museo al terminar.
-
-| Juego | Artefacto | Qué enseña |
-|---|---|---|
-| **Descenso lunar** | Eagle | Que la etapa de descenso no podía volver a la órbita: aunque te sobre combustible, necesitas otro motor y otro tanque. |
-| **El último invierno** | Opportunity | Que la tormenta de 2018 no fue una avería, sino un presupuesto de energía que se agotó. No se puede ganar; se juega cuánta ciencia llega a casa. |
-
-Ambos usan cifras reales (18.184 lb de propelente, 770 lb al aterrizar, 468 → 22 Wh) y
-están documentados en `docs/DATOS.md`.
-
-### Entrevistas: la última entrevista
-
-Cada ficha tiene un botón **"Conectar con la máquina"**. Se abre un RPG de diálogo con
-cuatro unidades de señal y siete preguntas posibles: no alcanzan para todas, y lo que no
-preguntas se pierde. Al llegar a cero, la luz del artefacto se apaga y se genera una
-entrada en el **catálogo de memoria**, que persiste entre visitas (`localStorage`).
-
-- 4 entrevistas × 7 preguntas = 28 respuestas, todas con fuente en `docs/DATOS.md`.
-- 16 fragmentos de catálogo, 4 por artefacto.
-- El texto se escribe a 26 ms/carácter con un blip por letra (`public/sfx/text-blip.mp3`);
-  el botón **Sonido on/off** del HUD lo silencia y recuerda la preferencia.
-- Los retratos son WebP generados con IA (masters JPG en `assets/retratos-fuente/`):
-  el componente intenta `portrait-<id>.webp`, luego `.png` y cae al SVG sin tocar código.
-- Plan completo, dirección de arte y prompts: `docs/RPG.md`.
+1. **Space Shuttle Launch to Space (Cape Canaveral Pad 39B):**
+   - Take the pilot controls of Space Shuttle Atlantis lifting off from Kennedy Space Center Pad 39B.
+   - Ascend through atmospheric layers (Troposphere, Stratosphere, Mesosphere, Thermosphere, Exosphere).
+   - Dynamic stage separations: Solid Rocket Boosters (SRBs) jettison at Max-Q and External Tank (ET) separation at MECO.
+   - Multiple real-time camera views (`Cinematic Chase`, `Side Tracking`, `Top-Down Nadir`, and full `360° Free Look`).
+   - Authentic NASA countdown and launch audio, real-time dynamic flight telemetry (altitude, velocity, dynamic pressure Q, G-forces), and historical fleet gallery (Atlantis, Discovery, Columbia, Endeavour, Challenger).
+2. **Lunar Descent (Eagle):**
+   - Teaches why the descent stage could never return to orbit: even with reserve propellant, returning requires a completely distinct ascent engine and dedicated fuel tanks.
+3. **The Final Martian Winter (Opportunity):**
+   - Teaches that the 2018 global dust storm was not a mechanical failure, but a depletion of the solar energy budget. The goal is managing available power to transmit as much science back home before shutdown.
+4. **The Final Interview (Machine Dialogue RPG):**
+   - Connect directly with each spacecraft with limited signal strength (4 signal units). Choose from 7 questions per relic; unspoken questions are lost forever. Surviving logs persist in the user's local memory catalog (`localStorage`).
 
 ---
 
-## Stack
+## Languages (Bilingual Support)
+
+The application starts in **English** by default. The **EN / ES** toggle located on the top HUD (and inside all overlay dialogs) immediately switches all UI labels, artifact dossiers, transcripts, dialogues, minigames, catalog entries, and reading mode text.  
+User language preference is saved persistently in `localStorage` (`still-listening:lang`).
+
+---
+
+## How to Run
+
+### Local Development
+
+```bash
+# Clone the repository
+git clone https://github.com/Astro-Archive/Astro-Archive.github.io.git
+cd Astro-Archive.github.io
+
+# Install dependencies
+npm install
+
+# Start local dev server (default: http://localhost:5173)
+npm run dev
+
+# Build production bundle
+npm run build
+
+# Preview production build locally
+npm run preview
+```
+
+### Deployment
+
+The generated `dist/` folder is completely static and uses relative asset paths (`base: './'`), allowing deployment on any hosting service or subpath.
+
+- **GitHub Pages:** Automatically deployed from the `main` branch via `.github/workflows/deploy.yml`. Served at the root organization domain: **https://astroarchive.earth/**.
+- **Netlify:** Drag and drop the `dist/` directory into `app.netlify.com/drop`, or link to repository.
+- **Vercel:** Run `npx vercel --prod` from the project root.
+
+---
+
+## Tech Stack & Architecture
 
 ```
 Vite + React 19 + TypeScript
-three.js + @react-three/fiber + @react-three/drei
+Three.js + @react-three/fiber + @react-three/drei
 @react-three/postprocessing (Bloom + Vignette)
-CSS puro, scroll nativo, cero librerías de animación
+Pure modular CSS, zero heavy animation libraries (no GSAP, no Lenis)
+Web Audio API with persistent sound toggles
 ```
 
-Sin router, sin GSAP, sin Lenis, sin framework de UI. Todo lo visual está generado:
-
-- **Terreno**: un solo mesh de 11.520 triángulos, desplazado con ruido de valor y
-  coloreado por vértice. Se mezcla de gris lunar a óxido marciano a roca oscura a lo
-  largo del recorrido, así que no hay costuras entre zonas.
-- **Rocas**: 64 instancias de dodecaedro, una sola draw call.
-- **Cielo**: shader de degradado con dithering, montado en una esfera que sigue a la cámara.
-- **Sombra de contacto**: degradado radial pintado en canvas (no `ContactShadows`:
-  a ras de suelo estiraba las sombras de patas y antenas).
-- **Modelos**: normalizados por su dimensión mayor, centrados y apoyados en el suelo
-  automáticamente.
+- **Procedural Continuous Terrain:** An 11,520-polygon single continuous terrain mesh displaced via Value Noise + Fractional Brownian Motion (fBm) with vertex-blended transitions across lunar regolith, Martian oxide sands, and dark asteroidal rock.
+- **Optimized Instanced Geometry:** 64 instanced dodecahedrons rendered in a single draw call.
+- **Dynamic Dithered Sky:** Custom vertex and fragment sky shaders projecting smooth gradients onto a camera-following sphere.
+- **Contact Shadows:** Procedural radial gradients painted onto canvases avoiding artifact shadow stretching.
+- **Asset Normalization:** NASA GLB models are scaled, centered, and aligned to their respective ground contact planes automatically.
 
 ---
 
-## Estructura
+## Project Structure
 
 ```
-docs/PLAN.md              plan de proyecto y decisiones
-docs/DATOS.md             cada cifra con su fuente
-docs/QA.md                qué se verificó y qué no
-docs/GUION-VIDEO.md       guion del video de 100 s
-public/models/*.glb       4 modelos de NASA 3D Resources
-public/sfx/text-blip.mp3  blip de escritura del RPG
-scripts/check.mjs         verificación con Chromium headless (capturas + errores)
-scripts/sound.mjs         verifica el blip de escritura (toggle, MP3, silencio)
+docs/PLAN.md              Project roadmap and architectural decisions
+docs/DATOS.md             Scientific figures and primary NASA citations
+docs/QA.md                Verification checklists and test plans
+public/models/*.glb       Authentic 3D models from NASA 3D Resources
+public/sfx/               Digitized NASA audio transcripts, countdowns, and UI sound effects
 src/
   i18n/
-    lang.tsx              proveedor EN/ES, <html lang> y metadatos
-    ui.ts                 textos de interfaz en ambos idiomas
-    types.ts              tipo Lang
-  data/artifacts.ts       todo el contenido: textos, fuentes, paletas, terreno y cámaras
-  data/artifacts.en.ts    textos en inglés superpuestos a la estructura
-  data/epilogue.ts        epílogo en ambos idiomas
-  lib/noise.ts            ruido de valor + fBm + cráteres
-  lib/useScroll.ts        progreso de scroll, reduced-motion, detección de WebGL
-  rpg/
-    interviews.ts         las 28 respuestas, con fuente
-    interviews.en.ts      las mismas respuestas en inglés
-    catalog.ts            catálogo persistente (localStorage)
-    InterviewGame.tsx     overlay de la entrevista
-    InterviewScene.tsx    diorama low-poly del artefacto
-    blip.ts               blip de escritura (Web Audio + preferencia de sonido)
-    Catalog.tsx           catálogo de memoria
+    lang.tsx              Language context provider (EN / ES) and metadata sync
+    ui.ts                 Bilingual user interface strings
+  data/
+    artifacts.ts          Core dataset: coordinates, telemetry, cameras, and biographies
+    artifacts.en.ts       English localized text layer
+    epilogue.ts           Bilingual epilogue narrative
   game/
-    DescentGame.tsx       minijuego de descenso (overlay 3D)
-    descentPhysics.ts     física pura, compartida con el script de balance
-    EnergyGame.tsx        minijuego de presupuesto de energía
+    LaunchGame.tsx        Space Shuttle launch simulator (Pad 39B to Orbit)
+    CapeCanaveralPad.tsx  Satellite-mapped launchpad environment
+    SpaceShuttleModel.tsx Modular 3D shuttle stack (Orbiter, External Tank, SRBs)
+    DescentGame.tsx       Apollo 11 lunar descent simulator
+    EnergyGame.tsx        Opportunity solar budget simulator
+  rpg/
+    InterviewGame.tsx     Spacecraft interactive dialogue RPG
+    InterviewScene.tsx    Focused low-poly relic diorama
+    catalog.ts            Persistent memory archive (localStorage)
   scene/
-    Experience.tsx        contenido del canvas
-    CameraRig.tsx         cámara sobre curva CatmullRom
-    Cosmos.tsx            cielo, estrellas, niebla
-    SkyDome.tsx           cielo degradado de una sola estación
-    skyShader.ts          shader compartido del cielo
-    World.tsx             terreno continuo + rocas
-    TerrainPatch.tsx      relieve acotado para el diorama de entrevista
-    Station.tsx           artefacto, anillo, sombra, polvo
-    ArtifactModel.tsx     carga y normalización de GLB
+    Experience.tsx        Main Three.js scene composer and lighting
+    CameraRig.tsx         Catmull-Rom spline camera rig with responsive aspect ratio adaptors
+    Cosmos.tsx            Atmospheric horizon, fog, and starfield
+    World.tsx             Continuous seamless terrain with procedural rocks
+    Station.tsx           Exhibition lighting, dust motes, and pedestal rings
+    ArtifactModel.tsx     GLB loader, bounding normalizer, and realistic PBR materials
   ui/
-    ChapterCard.tsx       tarjeta del capítulo
-    Timeline.tsx          navegación inferior
-    ReadingMode.tsx       versión artículo, sin 3D
-    Epilogue.tsx          cierre: lo que estamos dejando ahora
-    LanguageSwitch.tsx    selector EN / ES persistente
-    SignalMeter.tsx       medidor de señal
+    ChapterCard.tsx       Interactive chapter dossier card
+    Timeline.tsx          Bottom timeline controller
+    ReadingMode.tsx       Accessible non-WebGL editorial layout
+    LanguageSwitch.tsx    Persistent EN / ES selector
+    SignalMeter.tsx       Status indicator
 ```
 
-Añadir un artefacto = añadir un objeto a `src/data/artifacts.ts` y un `.glb` a
-`public/models/`. No hay nada cableado a mano en la escena.
+---
+
+## Data Sources & Accuracy
+
+All telemetry and historical context are sourced from official archives:
+
+- **NASA NSSDCA** (`nssdc.gsfc.nasa.gov`) — Master catalog of spacecraft and experiments.
+- **NASA Science & Mission Archives** (`science.nasa.gov`) — Primary mission logs and findings.
+- **NASA 3D Resources** (`science.nasa.gov/3d-resources`) — Official spacecraft models.
+
+### Historical Precision Notes
+
+- *"My battery is low and it's getting dark"* was **not** an automated transmission from Opportunity: it was a poetic paraphrasing of the rover's final power telemetry by science journalist Jacob Margolis (JPL). The project explicitly highlights this distinction.
+- **Ingenuity** did not crash: a forced emergency landing in low-texture terrain caused a rotor tip strike (confirmed January 2024).
+- **Dawn** did not crash into Ceres: it remains in an uncontrolled, stable perpetual orbit around the dwarf planet following hydrazine fuel depletion in 2018.
+- **Apollo 11**: Only the **descent stage** remains on the lunar surface. The ascent stage lifted off with the crew and later impacted the Moon.
 
 ---
 
-## Datos y fuentes
+## Accessibility & Performance
 
-Toda la información proviene de:
-
-- **NSSDCA** (`nssdc.gsfc.nasa.gov`) — catálogo definitivo de naves e instrumentos.
-- **NASA Science** y **NASA.gov** — páginas de misión.
-- **NASA 3D Resources** (`science.nasa.gov/3d-resources`) — modelos GLB.
-
-### Notas de precisión
-
-Estas son las trampas que el proyecto evita a propósito:
-
-- *"My battery is low and it's getting dark"* **no fue una transmisión de Opportunity**:
-  es una paráfrasis de Jacob Margolis (JPL) sobre su telemetría. Aparece citada como
-  advertencia, no como dato.
-- **Ingenuity** no se estrelló: un aterrizaje de emergencia dañó una pala del rotor
-  (anunciado en enero de 2024).
-- **Dawn** no se estrelló ni regresó: sigue en órbita alrededor de Ceres, sin propelente,
-  desde 2018.
-- **Apolo 11**: en la superficie quedó la etapa de **descenso**. La de ascenso despegó y
-  después impactó la Luna. El modelo de NASA muestra el módulo completo y la ficha lo dice.
-- El sismómetro del Apolo 11 falló a las pocas semanas por sobrecalentamiento; fueron los
-  de las misiones siguientes los que escucharon la Luna hasta 1977.
+- **Semantic DOM:** All text, numbers, and narratives exist in real semantic DOM elements for full screen reader accessibility.
+- **Non-WebGL Reading Mode:** Full article-style reading mode that operates cleanly without WebGL and serves as an automatic graceful fallback.
+- **`prefers-reduced-motion`:** Respects user operating system preferences by disabling camera drift, floating animations, and particle sparkle loops.
+- **Full Keyboard Navigation:** Complete navigation via `ArrowLeft` / `ArrowRight` and `Tab` with visible focus rings. Focus is safely trapped inside modal dialogs and restored on exit.
+- **Adaptive Camera Rig:** Intelligently zooms and reframes vertical viewports on mobile devices so models and text cards remain in clear view.
 
 ---
 
-## Accesibilidad
+## Credits & License
 
-- Todo el texto vive en **DOM real**, no en el canvas: legible por lectores de pantalla.
-- **Modo lectura** completo sin WebGL, también usado como fallback automático si el
-  navegador no soporta WebGL.
-- `prefers-reduced-motion`: sin partículas, sin deriva de cámara, sin transiciones.
-- Navegación completa por teclado con foco visible.
-- Los overlays atrapan el foco: el fondo queda `inert` y al cerrar el foco vuelve al botón
-  que los abrió.
-- Contraste AA sobre fondo oscuro.
-- La cámara se adapta al aspecto de la pantalla: en móvil se aleja y encuadra el
-  artefacto por encima de la tarjeta.
-
----
-
-## Rendimiento
-
-| Métrica | Valor |
-|---|---|
-| Modelos | 3,6 MB (4 GLB) |
-| JS | ~390 KB gzip |
-| CSS | ~3 KB gzip |
-| Triángulos de escena | ~12.000 + modelos |
-| PostFX | Bloom + Vignette |
-| `dpr` | `[1, 1.75]` |
-
----
-
-## Créditos y licencias
-
-- **Modelos 3D**: NASA 3D Resources / NASA.
-  Material de NASA generalmente sin copyright en EE.UU.; se acredita la fuente y no se
-  sugiere endorsement. NASA no patrocina ni respalda este proyecto.
-- **Datos**: NSSDCA y NASA Science, citados capítulo por capítulo.
-- **Código y textos**: proyecto del 2026 NASA Space Apps Challenge.
-
-Las secciones marcadas como *Voz ficcionalizada* son recreaciones literarias, no
-transmisiones reales.
+- **3D Models & Audio:** Courtesy of NASA 3D Resources and NASA open public archives.
+- **Code & Creative Writing:** Developed by **Team Eclipse** for the 2026 NASA Space Apps Challenge.
+- **License:** Licensed under the [MIT License](LICENSE).
