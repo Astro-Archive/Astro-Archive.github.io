@@ -104,51 +104,7 @@ function CloudDeck({ altitude }: { altitude: number }) {
   );
 }
 
-/** Earth Curved Horizon & Atmospheric Halo */
-function CurvedEarthHorizon({ altitude, pitch }: { altitude: number; pitch: number }) {
-  const earthMeshRef = useRef<THREE.Mesh>(null);
 
-  const earthMat = useMemo(
-    () =>
-      new THREE.MeshStandardMaterial({
-        color: '#1d4ed8',
-        roughness: 0.85,
-        metalness: 0.1,
-      }),
-    []
-  );
-
-  const haloMat = useMemo(
-    () =>
-      new THREE.MeshBasicMaterial({
-        color: '#38bdf8',
-        transparent: true,
-        opacity: 0.52,
-        blending: THREE.AdditiveBlending,
-        side: THREE.BackSide,
-      }),
-    []
-  );
-
-  useFrame(() => {
-    if (earthMeshRef.current) {
-      const earthCenterY = -480 - altitude * 2.2;
-      earthMeshRef.current.position.set(0, earthCenterY, -140);
-      earthMeshRef.current.rotation.x = ((90 - pitch) * Math.PI) / 180 * 0.4;
-    }
-  });
-
-  return (
-    <mesh ref={earthMeshRef} position={[0, -480, -140]}>
-      <sphereGeometry args={[420, 64, 64]} />
-      <primitive object={earthMat} attach="material" />
-      <mesh scale={[1.018, 1.018, 1.018]}>
-        <sphereGeometry args={[420, 48, 48]} />
-        <primitive object={haloMat} attach="material" />
-      </mesh>
-    </mesh>
-  );
-}
 
 /* ---------------- MAIN LAUNCH SCENE ---------------- */
 
@@ -269,8 +225,7 @@ function LaunchScene({
       {/* DYNAMIC STARFIELD */}
       <DynamicStarfield altitude={state.altitude} />
 
-      {/* CURVED EARTH HORIZON */}
-      <CurvedEarthHorizon altitude={state.altitude} pitch={state.pitch} />
+
     </>
   );
 }
@@ -573,7 +528,7 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
       <div className="game-stage" style={{ position: 'absolute', inset: 0 }}>
         <Canvas
           dpr={[1, 1.75]}
-          camera={{ fov: 58, near: 0.1, far: 1400, position: [0, -14, 48] }}
+          camera={{ fov: 58, near: 0.2, far: 50000, position: [0, -14, 48] }}
           gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
         >
           <LaunchScene

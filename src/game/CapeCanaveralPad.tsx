@@ -12,45 +12,86 @@ export function CapeCanaveralPad({ altitude }: CapeCanaveralPadProps) {
   const padScene = useMemo(() => padGltf.scene.clone(true), [padGltf]);
 
   // 2. High-resolution authentic satellite aerial photo of Cape Canaveral Pad 39
-  const aerialTex = useTexture('textures/cape-canaveral-aerial.jpg');
-  aerialTex.colorSpace = THREE.SRGBColorSpace;
-  aerialTex.wrapS = THREE.ClampToEdgeWrapping;
-  aerialTex.wrapT = THREE.ClampToEdgeWrapping;
-  aerialTex.anisotropy = 8;
+  // along with a smooth feathered alpha mask that eliminates any hard rectangular borders
+  const [aerialTex, alphaMaskTex] = useTexture([
+    'textures/cape-canaveral-wide.jpg',
+    'textures/cape-canaveral-alpha.png',
+  ]);
 
-  // Fade out pad when very high up to save fill-rate
-  if (altitude > 45) return null;
+  useMemo(() => {
+    aerialTex.colorSpace = THREE.SRGBColorSpace;
+    aerialTex.wrapS = THREE.ClampToEdgeWrapping;
+    aerialTex.wrapT = THREE.ClampToEdgeWrapping;
+    aerialTex.anisotropy = 8;
 
-  // The tower is ~246 units native height. Scaled by 0.46, it reaches ~115m real-world height.
+    alphaMaskTex.wrapS = THREE.ClampToEdgeWrapping;
+    alphaMaskTex.wrapT = THREE.ClampToEdgeWrapping;
+  }, [aerialTex, alphaMaskTex]);
+
+  // Tower scale ~115m real-world height
   const padScale = 0.46;
 
-  return (
-    <group position={[0, -altitude * 10, 0]}>
-      {/* 3D Mobile Launcher & Umbilical Tower Model */}
-      <group position={[-6.5, 0, 0]} scale={padScale}>
-        <primitive object={padScene} />
-      </group>
+  // Seamless altitude progression: ground smoothly drops beneath the ascending shuttle
+  const groundY = useMemo(() => {
+    if (altitude <= 2) return -altitude * 10;
+    return -20 - (altitude - 2) * 8.5;
+  }, [altitude]);
 
-      {/* Flat Aerial Satellite Imagery Ground Terrain (Aligned with Pad 39) */}
-      <mesh position={[12, -0.2, -8]} rotation={[-Math.PI / 2, 0, Math.PI / 2]}>
-        <planeGeometry args={[750, 750]} />
+  return (
+    <group position={[0, groundY, 0]}>
+      {/* 1. 3D Mobile Launcher & Umbilical Tower Model (detailed up close) */}
+      {altitude < 30 && (
+        <group position={[-6.5, 0, 0]} scale={padScale}>
+          <primitive object={padScene} />
+        </group>
+      )}
+
+      {/* 2. High-Resolution Satellite Aerial Photography of LC-39B Pad & Coast */}
+      {/* Feathered with alphaMap so the outer borders dissolve into the landscape with 0 seams */}
+      <mesh position={[-38, -0.2, 22]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[3400, 2251, 16, 16]} />
         <meshStandardMaterial
           map={aerialTex}
-          roughness={0.95}
+          alphaMap={alphaMaskTex}
+          transparent={true}
+          roughness={0.92}
           metalness={0.05}
+          depthWrite={false}
         />
       </mesh>
 
-      {/* Extended Atlantic Ocean Horizon Plane beyond the pad */}
-      <mesh position={[600, -0.4, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[1400, 2200]} />
-        <meshStandardMaterial color="#0c4a6e" roughness={0.3} metalness={0.3} />
+      {/* 3. Vast Florida Continent & Merritt Island Wetlands Plane (West) */}
+      <mesh position={[-22000, -0.6, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[44000, 52000]} />
+        <meshStandardMaterial color="#1e2c1c" roughness={0.94} metalness={0.06} />
       </mesh>
 
-      {/* Pad Perimeter Floodlights for dramatic night/dusk launch illumination */}
-      <pointLight color="#fef08a" intensity={45} distance={140} position={[-30, 22, 30]} />
-      <pointLight color="#fef08a" intensity={45} distance={140} position={[30, 22, 30]} />
-      <pointLight color="#bae6fd" intensity={30} distance={120} position={[0, 45, -20]} />
+      {/* 4. Vast Atlantic Ocean Plane extending to the horizon (East) */}
+      <mesh position={[22000, -0.5, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[44000, 52000]} />
+        <meshStandardMaterial color="#0c384e" roughness={0.25} metalness={0.25} />
+      </mesh>
+
+      {/* 5. Sandy Beach Coastline Strip matching the Florida coast angle */}
+      <mesh position={[580, -0.52, 0]} rotation={[-Math.PI / 2, 0, -0.61]}>
+        <planeGeometry args={[180, 52000]} />
+        <meshStandardMaterial color="#b09f7a" roughness={0.95} />
+      </mesh>
+
+      {/* 6. Enormous Horizon Ground Ring so the world is never cut off */}
+      <mesh position={[0, -0.9, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0, 48000, 64]} />
+        <meshStandardMaterial color="#0b2c3d" roughness={0.5} />
+      </mesh>
+
+      {/* 7. Pad Perimeter Floodlights for dramatic liftoff lighting */}
+      {altitude < 12 && (
+        <>
+          <pointLight color="#fef08a" intensity={45} distance={140} position={[-30, 22, 30]} />
+          <pointLight color="#fef08a" intensity={45} distance={140} position={[30, 22, 30]} />
+          <pointLight color="#bae6fd" intensity={30} distance={120} position={[0, 45, -20]} />
+        </>
+      )}
     </group>
   );
 }
