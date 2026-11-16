@@ -68,6 +68,23 @@ export default function App() {
     };
   }, [game, reading, interview, catalogOpen]);
 
+  // En PC (escritorio con ratón), se desactiva el scroll libre con rueda sobre la página principal.
+  // La navegación se realiza de forma limpia mediante los botones inferiores (Timeline), "Iniciar Recorrido" y flechas de teclado.
+  useEffect(() => {
+    const isTouch = 'ontouchstart' in window || (navigator.maxTouchPoints > 0 && window.innerWidth <= 1024);
+    if (!isTouch) {
+      const handleWheel = (e: WheelEvent) => {
+        const target = e.target as HTMLElement | null;
+        if (target?.closest('.card-scroll, .reading-prose, .catalog-modal, .shuttle-modal, .fleet-modal')) {
+          return;
+        }
+        e.preventDefault();
+      };
+      window.addEventListener('wheel', handleWheel, { passive: false });
+      return () => window.removeEventListener('wheel', handleWheel);
+    }
+  }, []);
+
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -75,8 +92,14 @@ export default function App() {
         setGame(null);
       }
       if (reading || game || interview || catalogOpen) return;
-      if (event.key === 'ArrowRight') goTo(Math.min(ARTIFACT_COUNT - 1, station + 1));
-      if (event.key === 'ArrowLeft') goTo(Math.max(0, station - 1));
+      if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+        event.preventDefault();
+        goTo(station === -1 ? 0 : Math.min(ARTIFACT_COUNT - 1, station + 1));
+      }
+      if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+        event.preventDefault();
+        goTo(station === -1 ? 0 : Math.max(0, station - 1));
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -209,31 +232,15 @@ export default function App() {
           {t.heroLine2}
         </p>
         <p className="hero-hint">{t.heroHint}</p>
-        <div style={{ marginTop: '20px' }}>
+        <div style={{ marginTop: '24px' }}>
           <button
             type="button"
-            className="ghost-button hero-tour-button"
+            className="hero-tour-button"
             onClick={() => goTo(0)}
-            style={{
-              padding: '11px 24px',
-              fontSize: '12px',
-              fontWeight: 700,
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
-              background: 'rgba(255, 107, 53, 0.15)',
-              borderColor: 'rgba(255, 107, 53, 0.6)',
-              color: '#ffffff',
-              boxShadow: '0 0 16px rgba(255, 107, 53, 0.22)',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}
             aria-label={lang === 'es' ? 'Iniciar recorrido' : 'Start tour'}
           >
             <span>{lang === 'es' ? 'Iniciar recorrido' : 'Start tour'}</span>
-            <span aria-hidden="true">↓</span>
+            <span aria-hidden="true" style={{ fontSize: '15px' }}>↓</span>
           </button>
         </div>
       </div>

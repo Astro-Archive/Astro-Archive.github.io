@@ -46,10 +46,18 @@ export function Station({ artifact, reduced }: StationProps) {
         noise={0.5}
       />
 
+      {/* Luz principal de museo: ilumina el modelo para que destaque con nitidez */}
       <pointLight
-        position={[2.2, 4.8, 2.2]}
-        intensity={12}
-        distance={15}
+        position={[2.4, 4.6, 2.8]}
+        intensity={22}
+        distance={20}
+        decay={1.8}
+        color="#fff9f2"
+      />
+      <pointLight
+        position={[-2.8, 3.2, 1.8]}
+        intensity={14}
+        distance={18}
         decay={2}
         color={artifact.palette.accent}
       />

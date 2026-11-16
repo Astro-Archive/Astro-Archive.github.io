@@ -47,8 +47,15 @@ export function ArtifactModel({ url, fit, yaw, reduced }: ArtifactModelProps) {
       const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
       for (const mat of mats) {
         const std = mat as THREE.MeshStandardMaterial;
-        if (std && 'envMapIntensity' in std) std.envMapIntensity = 0.85;
-        if (std) std.side = THREE.FrontSide;
+        if (std) {
+          std.side = THREE.FrontSide;
+          // Evita que la niebla de fondo opaque el artefacto en exhibición
+          std.fog = false;
+          if ('envMapIntensity' in std) std.envMapIntensity = 1.35;
+          if ('roughness' in std && typeof std.roughness === 'number') {
+            std.roughness = Math.min(std.roughness, 0.72);
+          }
+        }
       }
     });
 

@@ -58,11 +58,12 @@ export function useScroll(count: number): ScrollState {
   const steps = count + 1;
   const scaled = progress * steps;
   const index = scaled - HERO_STEP;
-  const station = Math.min(count - 1, Math.max(0, Math.round(index)));
+  // En la portada (scaled < 0.5) ninguna estación está seleccionada aún (-1)
+  const station = scaled < 0.5 ? -1 : Math.min(count - 1, Math.max(0, Math.round(index)));
   // La tarjeta permanece visible de forma estable mientras el usuario navega por las estaciones
   // (evita que desaparezca al detener el scroll o en dispositivos móviles)
-  const inTourRange = scaled >= 0.45 && scaled < count + 0.6;
-  const card = inTourRange ? station : null;
+  const inTourRange = scaled >= 0.5 && scaled < count + 0.6;
+  const card = inTourRange ? Math.min(count - 1, Math.max(0, Math.round(index))) : null;
 
   const jump = (progressTarget: number) => {
     const max = document.documentElement.scrollHeight - window.innerHeight;

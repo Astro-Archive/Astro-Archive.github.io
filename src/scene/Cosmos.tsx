@@ -23,7 +23,8 @@ export function Cosmos({ progress }: { progress: React.RefObject<number> }) {
     [],
   );
 
-  const fog = useMemo(() => new THREE.Fog(ARTIFACTS[0].palette.bottom, 14, 62), []);
+  // La niebla comienza a partir de los 28m para no opacar los artefactos en primer plano
+  const fog = useMemo(() => new THREE.Fog(ARTIFACTS[0].palette.bottom, 28, 85), []);
   scene.fog = fog;
 
   const tmpA = useMemo(() => new THREE.Color(), []);

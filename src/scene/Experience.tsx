@@ -18,10 +18,10 @@ export const Experience = memo(function Experience({ progress, reduced }: Experi
       <CameraRig progress={progress} reduced={reduced} />
       <Cosmos progress={progress} />
 
-      <ambientLight intensity={0.45} />
-      <hemisphereLight args={['#93a9cc', '#2a1e14', 0.7]} />
-      <directionalLight position={[9, 14, 7]} intensity={2.4} color="#fff4e2" />
-      <directionalLight position={[-9, 7, -9]} intensity={0.9} color="#6f8fd0" />
+      <ambientLight intensity={0.65} />
+      <hemisphereLight args={['#b8cde8', '#2a1e14', 0.85]} />
+      <directionalLight position={[9, 14, 7]} intensity={3.0} color="#fff8ee" />
+      <directionalLight position={[-9, 7, -9]} intensity={1.5} color="#8ab4f8" />
 
       <Suspense fallback={null}>
         <Environment resolution={96} frames={1}>
@@ -40,8 +40,8 @@ export const Experience = memo(function Experience({ progress, reduced }: Experi
       </Suspense>
 
       <EffectComposer multisampling={0}>
-        <Bloom intensity={0.5} luminanceThreshold={0.62} luminanceSmoothing={0.2} mipmapBlur />
-        <Vignette offset={0.32} darkness={0.72} />
+        <Bloom intensity={0.45} luminanceThreshold={0.65} luminanceSmoothing={0.2} mipmapBlur />
+        <Vignette offset={0.35} darkness={0.35} />
       </EffectComposer>
     </>
   );
