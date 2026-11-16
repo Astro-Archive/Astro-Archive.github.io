@@ -528,8 +528,8 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
       <div className="game-stage" style={{ position: 'absolute', inset: 0 }}>
         <Canvas
           dpr={[1, 1.75]}
-          camera={{ fov: 58, near: 0.2, far: 50000, position: [0, -14, 48] }}
-          gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
+          camera={{ fov: 58, near: 1.0, far: 35000, position: [0, -14, 48] }}
+          gl={{ antialias: true, alpha: false, logarithmicDepthBuffer: true, powerPreference: 'high-performance' }}
         >
           <LaunchScene
             state={state}

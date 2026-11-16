@@ -48,7 +48,7 @@ export function CapeCanaveralPad({ altitude }: CapeCanaveralPadProps) {
 
       {/* 2. High-Resolution Satellite Aerial Photography of LC-39B Pad & Coast */}
       {/* Feathered with alphaMap so the outer borders dissolve into the landscape with 0 seams */}
-      <mesh position={[-38, -0.2, 22]} rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh position={[-38, -0.15, 22]} rotation={[-Math.PI / 2, 0, 0]} renderOrder={3}>
         <planeGeometry args={[3400, 2251, 16, 16]} />
         <meshStandardMaterial
           map={aerialTex}
@@ -57,31 +57,60 @@ export function CapeCanaveralPad({ altitude }: CapeCanaveralPadProps) {
           roughness={0.92}
           metalness={0.05}
           depthWrite={false}
+          polygonOffset={true}
+          polygonOffsetFactor={-4}
+          polygonOffsetUnits={-4}
         />
       </mesh>
 
       {/* 3. Vast Florida Continent & Merritt Island Wetlands Plane (West) */}
-      <mesh position={[-22000, -0.6, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh position={[-22000, -3.5, 0]} rotation={[-Math.PI / 2, 0, 0]} renderOrder={1}>
         <planeGeometry args={[44000, 52000]} />
-        <meshStandardMaterial color="#1e2c1c" roughness={0.94} metalness={0.06} />
+        <meshStandardMaterial
+          color="#1e2c1c"
+          roughness={0.94}
+          metalness={0.06}
+          polygonOffset={true}
+          polygonOffsetFactor={1}
+          polygonOffsetUnits={1}
+        />
       </mesh>
 
       {/* 4. Vast Atlantic Ocean Plane extending to the horizon (East) */}
-      <mesh position={[22000, -0.5, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh position={[22000, -2.2, 0]} rotation={[-Math.PI / 2, 0, 0]} renderOrder={1}>
         <planeGeometry args={[44000, 52000]} />
-        <meshStandardMaterial color="#0c384e" roughness={0.25} metalness={0.25} />
+        <meshStandardMaterial
+          color="#0c384e"
+          roughness={0.25}
+          metalness={0.25}
+          polygonOffset={true}
+          polygonOffsetFactor={1}
+          polygonOffsetUnits={1}
+        />
       </mesh>
 
       {/* 5. Sandy Beach Coastline Strip matching the Florida coast angle */}
-      <mesh position={[580, -0.52, 0]} rotation={[-Math.PI / 2, 0, -0.61]}>
+      <mesh position={[580, -1.2, 0]} rotation={[-Math.PI / 2, 0, -0.61]} renderOrder={2}>
         <planeGeometry args={[180, 52000]} />
-        <meshStandardMaterial color="#b09f7a" roughness={0.95} />
+        <meshStandardMaterial
+          color="#b09f7a"
+          roughness={0.95}
+          polygonOffset={true}
+          polygonOffsetFactor={-2}
+          polygonOffsetUnits={-2}
+        />
       </mesh>
 
       {/* 6. Enormous Horizon Ground Ring so the world is never cut off */}
-      <mesh position={[0, -0.9, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh position={[0, -8.0, 0]} rotation={[-Math.PI / 2, 0, 0]} renderOrder={0}>
         <ringGeometry args={[0, 48000, 64]} />
-        <meshStandardMaterial color="#0b2c3d" roughness={0.5} />
+        <meshStandardMaterial
+          color="#0b2c3d"
+          roughness={0.5}
+          polygonOffset={true}
+          polygonOffsetFactor={4}
+          polygonOffsetUnits={4}
+        />
       </mesh>
 
       {/* 7. Pad Perimeter Floodlights for dramatic liftoff lighting */}
