@@ -9,7 +9,7 @@ export interface Source {
   url: string;
 }
 
-export type GameId = 'descent' | 'energy';
+export type GameId = 'descent' | 'energy' | 'launch';
 
 export interface Artifact {
   id: string;

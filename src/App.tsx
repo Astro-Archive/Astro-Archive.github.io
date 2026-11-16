@@ -14,8 +14,9 @@ import { useLang } from './i18n/lang';
 import { uiFor } from './i18n/ui';
 import { DescentGame } from './game/DescentGame';
 import { EnergyGame } from './game/EnergyGame';
+import { LaunchGame } from './game/LaunchGame';
 import { InterviewGame } from './rpg/InterviewGame';
-import { Catalog } from './rpg/Catalog';
+import { CatalogModal as Catalog } from './rpg/CatalogModal';
 import { completedInterviews, useCatalog } from './rpg/catalog';
 
 const EPILOGUE_AT = 4.6; // índice de paso, no progreso: la ficha de Dawn queda legible antes
@@ -167,6 +168,19 @@ export default function App() {
           >
             {reading ? t.readingOff : t.readingOn}
           </button>
+          <button
+            type="button"
+            className="ghost-button hud-launch"
+            onClick={() => setGame('launch')}
+            style={{
+              borderColor: 'rgba(56, 189, 248, 0.6)',
+              color: '#38bdf8',
+              boxShadow: '0 0 10px rgba(56, 189, 248, 0.2)',
+            }}
+            aria-label={lang === 'es' ? 'Despegar al Espacio' : 'Launch to Space'}
+          >
+            🚀 {lang === 'es' ? 'Despegar al Espacio' : 'Launch to Space'}
+          </button>
           <LanguageSwitch />
           <a
             className="ghost-button hud-external"
@@ -194,6 +208,30 @@ export default function App() {
           {t.heroLine2}
         </p>
         <p className="hero-hint">{t.heroHint}</p>
+        <div style={{ marginTop: '18px' }}>
+          <button
+            type="button"
+            className="ghost-button"
+            onClick={() => setGame('launch')}
+            style={{
+              padding: '10px 22px',
+              fontSize: '13px',
+              fontWeight: 700,
+              letterSpacing: '0.04em',
+              background: 'rgba(14, 165, 233, 0.18)',
+              borderColor: '#38bdf8',
+              color: '#38bdf8',
+              boxShadow: '0 0 20px rgba(56, 189, 248, 0.25)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              cursor: 'pointer',
+            }}
+          >
+            <span>🚀</span>
+            <span>{lang === 'es' ? 'Misión de Despegue (Cabo Cañaveral)' : 'Launch Mission (Cape Canaveral)'}</span>
+          </button>
+        </div>
       </div>
 
       <ChapterCard
@@ -220,6 +258,14 @@ export default function App() {
       {reading && <ReadingMode onClose={() => setReading(false)} />}
       {game === 'descent' && <DescentGame onClose={closeGame} />}
       {game === 'energy' && <EnergyGame onClose={closeGame} />}
+      {game === 'launch' && (
+        <LaunchGame
+          onClose={closeGame}
+          onComplete={() => {
+            window.location.href = OTHER_PROJECT_URL;
+          }}
+        />
+      )}
       {interview && (
         <InterviewGame
           artifact={artifacts.find((a) => a.id === interview) ?? artifacts[0]}

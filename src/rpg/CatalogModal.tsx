@@ -12,7 +12,7 @@ interface CatalogProps {
   onInterview: (artifactId: string) => void;
 }
 
-export function Catalog({ onClose, onInterview }: CatalogProps) {
+export function CatalogModal({ onClose, onInterview }: CatalogProps) {
   const { lang } = useLang();
   const t = uiFor(lang);
   const artifacts = artifactsFor(lang);

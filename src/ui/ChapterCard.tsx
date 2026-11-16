@@ -17,6 +17,10 @@ export function ChapterCard({ artifact, visible, onPlay, onInterview }: ChapterC
   const GAME_LABEL: Record<GameId, { title: string; cta: string }> = {
     descent: { title: t.gameTitleDescent, cta: t.gameCtaDescent },
     energy: { title: t.gameTitleEnergy, cta: t.gameCtaEnergy },
+    launch: {
+      title: lang === 'es' ? 'Despegue a Órbita' : 'Launch to Orbit',
+      cta: lang === 'es' ? 'Pilotar el cohete' : 'Pilot the rocket',
+    },
   };
 
   const BEATS: Array<{ key: keyof Artifact['facts']; label: string }> = [
