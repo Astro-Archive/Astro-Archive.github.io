@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useLang } from '../i18n/lang';
@@ -18,96 +18,33 @@ import {
   stopRocketEngine,
   updateEngineAcoustics,
 } from './launchAudio';
+import { ShuttleStack } from './ShuttleStack';
+import { CapeCanaveralPad } from './CapeCanaveralPad';
 
 const OTHER_PROJECT_URL = 'https://astroarchive.earth/astro-archive/';
 
-/* ---------------- 3D COCKPIT & SCENE ---------------- */
+type CameraMode = 'chase' | 'cinematic' | 'cockpit';
 
-function CockpitFrame({ gForce, throttle, stage }: { gForce: number; throttle: number; stage: 1 | 2 | 'orbit' }) {
-  // Procedural cockpit structure: canopy pillars, window frame, and illuminated dashboard
-  const frameMat = useMemo(
-    () =>
-      new THREE.MeshStandardMaterial({
-        color: '#111622',
-        roughness: 0.75,
-        metalness: 0.85,
-      }),
-    []
-  );
-
-  const dashGlowMat = useMemo(
-    () =>
-      new THREE.MeshBasicMaterial({
-        color: stage === 'orbit' ? '#10b981' : '#00f0ff',
-        transparent: true,
-        opacity: 0.85,
-      }),
-    [stage]
-  );
-
-  return (
-    <group position={[0, -0.6, -1.1]}>
-      {/* Lower Dashboard */}
-      <mesh material={frameMat} position={[0, -0.65, 0.2]} rotation={[-0.45, 0, 0]}>
-        <boxGeometry args={[3.2, 0.7, 0.8]} />
-      </mesh>
-
-      {/* Illuminated HUD Dashboard Console Strips */}
-      <mesh material={dashGlowMat} position={[0, -0.32, 0.48]} rotation={[-0.45, 0, 0]}>
-        <boxGeometry args={[2.4, 0.04, 0.05]} />
-      </mesh>
-
-      {/* Left Canopy Pillar */}
-      <mesh material={frameMat} position={[-1.25, 0.5, 0.1]} rotation={[0, 0.25, -0.42]}>
-        <boxGeometry args={[0.16, 2.4, 0.2]} />
-      </mesh>
-
-      {/* Right Canopy Pillar */}
-      <mesh material={frameMat} position={[1.25, 0.5, 0.1]} rotation={[0, -0.25, 0.42]}>
-        <boxGeometry args={[0.16, 2.4, 0.2]} />
-      </mesh>
-
-      {/* Top Arch Canopy Beam */}
-      <mesh material={frameMat} position={[0, 1.45, 0.05]}>
-        <boxGeometry args={[2.5, 0.14, 0.2]} />
-      </mesh>
-
-      {/* Subtle Canopy Glass Tint */}
-      <mesh position={[0, 0.35, -0.05]}>
-        <planeGeometry args={[2.4, 2.0]} />
-        <meshPhysicalMaterial
-          color="#38bdf8"
-          transmission={0.92}
-          opacity={0.12}
-          transparent
-          roughness={0.1}
-          metalness={0.1}
-        />
-      </mesh>
-    </group>
-  );
-}
+/* ---------------- 3D ENVIRONMENT & ATMOSPHERE ---------------- */
 
 /** Starfield that fades in when ascending past the stratosphere into space */
 function DynamicStarfield({ altitude }: { altitude: number }) {
-  const pointsRef = useRef<THREE.Points>(null);
-
   const [geo, mat] = useMemo(() => {
-    const count = 1800;
+    const count = 2400;
     const positions = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
       const theta = Math.random() * Math.PI * 2;
       const phi = Math.acos(Math.random() * 2 - 1);
-      const r = 250 + Math.random() * 100;
+      const r = 350 + Math.random() * 150;
       positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
-      positions[i * 3 + 1] = Math.abs(r * Math.cos(phi)) + 10; // keep above horizon
+      positions[i * 3 + 1] = Math.abs(r * Math.cos(phi)) + 15;
       positions[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
     }
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     const m = new THREE.PointsMaterial({
       color: '#ffffff',
-      size: 1.4,
+      size: 1.6,
       transparent: true,
       opacity: 0,
     });
@@ -116,43 +53,78 @@ function DynamicStarfield({ altitude }: { altitude: number }) {
 
   useFrame(() => {
     if (mat) {
-      // Fade in stars as atmosphere thins (25 km -> 85 km)
-      const starAlpha = Math.min(1, Math.max(0, (altitude - 25) / 55));
+      // Fade in stars as atmosphere thins (20 km -> 80 km)
+      const starAlpha = Math.min(1, Math.max(0, (altitude - 20) / 60));
       mat.opacity = starAlpha;
     }
   });
 
-  return <primitive object={new THREE.Points(geo, mat)} ref={pointsRef} />;
+  return <primitive object={new THREE.Points(geo, mat)} />;
 }
 
-/** Earth limb curve and Florida ground launchpad */
-function WorldEnvironment({ altitude, pitch }: { altitude: number; pitch: number }) {
-  const earthMeshRef = useRef<THREE.Mesh>(null);
-  const padGroupRef = useRef<THREE.Group>(null);
-  const vaporConeRef = useRef<THREE.Mesh>(null);
+/** Tropospheric Cloud Layers (0-12 km) that the shuttle passes through */
+function CloudDeck({ altitude }: { altitude: number }) {
+  const cloudsRef = useRef<THREE.Group>(null);
 
-  // Cape Canaveral Pad 39A service tower and platform
-  const padTowerMat = useMemo(
-    () => new THREE.MeshStandardMaterial({ color: '#78350f', metalness: 0.6, roughness: 0.8 }),
-    []
-  );
-
-  // Earth horizon curved surface
-  const earthMat = useMemo(
+  const cloudMat = useMemo(
     () =>
       new THREE.MeshStandardMaterial({
-        color: '#1e3a8a',
-        roughness: 0.9,
+        color: '#f8fafc',
+        transparent: true,
+        opacity: 0.72,
+        roughness: 0.95,
+        depthWrite: false,
       }),
     []
   );
 
-  const atmoGlowMat = useMemo(
+  useFrame(() => {
+    if (cloudsRef.current) {
+      // Clouds drop down as shuttle climbs
+      cloudsRef.current.position.y = -altitude * 10 + 35;
+      cloudsRef.current.visible = altitude < 35;
+    }
+  });
+
+  return (
+    <group ref={cloudsRef}>
+      {/* Cloud layer discs around the Florida coast */}
+      <mesh position={[-60, 0, 40]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[95, 32]} />
+        <primitive object={cloudMat} attach="material" />
+      </mesh>
+      <mesh position={[80, 8, -30]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[120, 32]} />
+        <primitive object={cloudMat} attach="material" />
+      </mesh>
+      <mesh position={[-40, 16, -70]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[85, 32]} />
+        <primitive object={cloudMat} attach="material" />
+      </mesh>
+    </group>
+  );
+}
+
+/** Earth Curved Horizon & Atmospheric Halo */
+function CurvedEarthHorizon({ altitude, pitch }: { altitude: number; pitch: number }) {
+  const earthMeshRef = useRef<THREE.Mesh>(null);
+
+  const earthMat = useMemo(
+    () =>
+      new THREE.MeshStandardMaterial({
+        color: '#1d4ed8',
+        roughness: 0.85,
+        metalness: 0.1,
+      }),
+    []
+  );
+
+  const haloMat = useMemo(
     () =>
       new THREE.MeshBasicMaterial({
         color: '#38bdf8',
         transparent: true,
-        opacity: 0.45,
+        opacity: 0.5,
         blending: THREE.AdditiveBlending,
         side: THREE.BackSide,
       }),
@@ -160,94 +132,92 @@ function WorldEnvironment({ altitude, pitch }: { altitude: number; pitch: number
   );
 
   useFrame(() => {
-    // As altitude increases, pad drops down rapidly
-    if (padGroupRef.current) {
-      const padY = -altitude * 12;
-      padGroupRef.current.position.y = padY;
-      padGroupRef.current.visible = altitude < 30;
-    }
-
-    // Earth curve horizon: scales and positions down to show Earth limb curvature
     if (earthMeshRef.current) {
-      const earthCenterY = -280 - (altitude * 1.5);
-      earthMeshRef.current.position.set(0, earthCenterY, -120);
-      earthMeshRef.current.rotation.x = (90 - pitch) * 0.015;
-    }
-
-    // Transonic vapor cone effect around Mach 1 (10-18 km)
-    if (vaporConeRef.current) {
-      const inVaporRange = altitude >= 10 && altitude <= 17;
-      vaporConeRef.current.visible = inVaporRange;
-      if (inVaporRange) {
-        const pulse = 0.9 + Math.sin(Date.now() * 0.03) * 0.15;
-        vaporConeRef.current.scale.set(pulse, pulse, pulse);
-      }
+      // Horizon drops and curves gracefully beneath the shuttle as it ascends into orbit
+      const earthCenterY = -480 - altitude * 2.2;
+      earthMeshRef.current.position.set(0, earthCenterY, -140);
+      earthMeshRef.current.rotation.x = ((90 - pitch) * Math.PI) / 180 * 0.4;
     }
   });
 
   return (
-    <>
-      {/* Launch Pad at Cape Canaveral (visible at low altitude) */}
-      <group ref={padGroupRef} position={[0, -2, -6]}>
-        {/* Concrete Pad Platform */}
-        <mesh position={[0, -1, 0]}>
-          <cylinderGeometry args={[25, 30, 2, 32]} />
-          <meshStandardMaterial color="#475569" roughness={0.9} />
-        </mesh>
-        {/* Kennedy LC-39A Service Tower */}
-        <mesh material={padTowerMat} position={[8, 14, -2]}>
-          <boxGeometry args={[4, 32, 4]} />
-        </mesh>
-        {/* Tower service boom arm */}
-        <mesh material={padTowerMat} position={[4, 22, -2]}>
-          <boxGeometry args={[5, 1.2, 1.2]} />
-        </mesh>
-        {/* Floodlights */}
-        <pointLight color="#fed7aa" intensity={25} distance={60} position={[0, 4, 0]} />
-      </group>
-
-      {/* Earth Curved Horizon Sphere */}
-      <mesh ref={earthMeshRef} position={[0, -320, -120]}>
-        <sphereGeometry args={[260, 64, 64]} />
-        <primitive object={earthMat} attach="material" />
-        {/* Atmosphere Cyan Glow Shell */}
-        <mesh scale={[1.025, 1.025, 1.025]}>
-          <sphereGeometry args={[260, 48, 48]} />
-          <primitive object={atmoGlowMat} attach="material" />
-        </mesh>
+    <mesh ref={earthMeshRef} position={[0, -480, -140]}>
+      <sphereGeometry args={[420, 64, 64]} />
+      <primitive object={earthMat} attach="material" />
+      {/* Cyan Atmospheric Glow Shell */}
+      <mesh scale={[1.018, 1.018, 1.018]}>
+        <sphereGeometry args={[420, 48, 48]} />
+        <primitive object={haloMat} attach="material" />
       </mesh>
-
-      {/* Transonic Mach Shock Vapor Cone */}
-      <mesh ref={vaporConeRef} position={[0, 0, -4]} rotation={[Math.PI / 2, 0, 0]} visible={false}>
-        <coneGeometry args={[2.8, 4, 32, 1, true]} />
-        <meshBasicMaterial
-          color="#ffffff"
-          transparent
-          opacity={0.35}
-          side={THREE.DoubleSide}
-          blending={THREE.AdditiveBlending}
-        />
-      </mesh>
-    </>
+    </mesh>
   );
+}
+
+/** Cockpit Interior Canopy (shown in 'cockpit' mode) */
+function CockpitCanopyFrame() {
+  const frameMat = useMemo(
+    () =>
+      new THREE.MeshStandardMaterial({
+        color: '#151922',
+        roughness: 0.8,
+        metalness: 0.7,
+      }),
+    []
+  );
+
+  return (
+    <group position={[0, 0, -1.2]}>
+      {/* Lower Instrument Glare Shield */}
+      <mesh material={frameMat} position={[0, -0.7, 0.2]} rotation={[-0.4, 0, 0]}>
+        <boxGeometry args={[3.4, 0.8, 0.8]} />
+      </mesh>
+      {/* Left Frame Pillar */}
+      <mesh material={frameMat} position={[-1.3, 0.4, 0.1]} rotation={[0, 0.25, -0.45]}>
+        <boxGeometry args={[0.15, 2.2, 0.2]} />
+      </mesh>
+      {/* Right Frame Pillar */}
+      <mesh material={frameMat} position={[1.3, 0.4, 0.1]} rotation={[0, -0.25, 0.45]}>
+        <boxGeometry args={[0.15, 2.2, 0.2]} />
+      </mesh>
+      {/* Overhead Console */}
+      <mesh material={frameMat} position={[0, 1.35, 0.1]}>
+        <boxGeometry args={[2.6, 0.2, 0.3]} />
+      </mesh>
+    </group>
+  );
+}
+
+/* ---------------- MAIN LAUNCH SCENE ---------------- */
+
+interface LaunchSceneProps {
+  state: LaunchState;
+  cameraMode: CameraMode;
+  srbSeparated: boolean;
+  etSeparated: boolean;
+  srbOffset: number;
+  etOffset: number;
+  orbitAngle: number;
 }
 
 function LaunchScene({
   state,
-  input,
-}: {
-  state: LaunchState;
-  input: React.RefObject<LaunchInput>;
-}) {
+  cameraMode,
+  srbSeparated,
+  etSeparated,
+  srbOffset,
+  etOffset,
+  orbitAngle,
+}: LaunchSceneProps) {
   const camera = useThree((s) => s.camera);
   const { scene } = useThree();
 
-  useFrame((_, delta) => {
-    // Dynamic Sky Color based on altitude
-    // 0 km: Sky Blue -> 20 km: Deep Azure -> 60 km: Indigo -> 100 km: Pure Cosmic Space Black
-    const alt = state.altitude;
-    let skyR = 0.22, skyG = 0.74, skyB = 0.97; // Day Sky Blue #38bdf8
+  const vaporConeRef = useRef<THREE.Mesh>(null);
 
+  useFrame((_, delta) => {
+    const alt = state.altitude;
+
+    // 1. Dynamic Atmosphere Sky Dome Lighting & Color
+    let skyR = 0.22, skyG = 0.74, skyB = 0.97;
     if (alt < 15) {
       const k = alt / 15;
       skyR = THREE.MathUtils.lerp(0.22, 0.11, k);
@@ -258,48 +228,123 @@ function LaunchScene({
       skyR = THREE.MathUtils.lerp(0.11, 0.04, k);
       skyG = THREE.MathUtils.lerp(0.31, 0.08, k);
       skyB = THREE.MathUtils.lerp(0.85, 0.25, k);
-    } else if (alt < 90) {
-      const k = (alt - 45) / 45;
-      skyR = THREE.MathUtils.lerp(0.04, 0.01, k);
-      skyG = THREE.MathUtils.lerp(0.08, 0.02, k);
-      skyB = THREE.MathUtils.lerp(0.25, 0.05, k);
+    } else if (alt < 85) {
+      const k = (alt - 45) / 40;
+      skyR = THREE.MathUtils.lerp(0.04, 0.008, k);
+      skyG = THREE.MathUtils.lerp(0.08, 0.015, k);
+      skyB = THREE.MathUtils.lerp(0.25, 0.04, k);
     } else {
-      skyR = 0.005;
-      skyG = 0.01;
-      skyB = 0.02; // Pure Void of Space
+      skyR = 0.004;
+      skyG = 0.008;
+      skyB = 0.015;
     }
 
     scene.background = new THREE.Color(skyR, skyG, skyB);
 
-    // Camera cockpit rumble & vibration based on G-Force & Rocket Engine Throttle
+    // 2. Camera Vibration / Rumble
     const shakeIntensity =
       state.stage === 'orbit'
         ? 0.001
-        : Math.min(0.06, 0.004 + (state.gForce * 0.008) * state.throttle);
+        : Math.min(0.05, 0.003 + state.gForce * 0.007 * state.throttle);
     const shakeX = (Math.random() - 0.5) * shakeIntensity;
     const shakeY = (Math.random() - 0.5) * shakeIntensity;
 
-    // Pilot steering roll / pitch bias
-    const rollAngle = state.corridorOffset * -0.15;
-    const pitchOffset = ((90 - state.pitch) * Math.PI) / 180 * 0.35;
+    // 3. Camera Position according to selected Mode
+    const pitchRad = ((90 - state.pitch) * Math.PI) / 180;
+    const rollAngle = state.corridorOffset * -0.12;
 
-    camera.position.set(shakeX, shakeY, 0);
-    camera.rotation.set(pitchOffset, 0, rollAngle);
+    if (cameraMode === 'chase') {
+      // Third-Person Chase Camera: positioned behind and below the Space Shuttle
+      const baseDist = 44 + (state.velocity / 28000) * 12;
+      const camY = -14 + Math.sin(pitchRad) * 6;
+      const camZ = baseDist * Math.cos(pitchRad * 0.4);
+
+      camera.position.set(
+        state.corridorOffset * -4 + shakeX,
+        camY + shakeY,
+        camZ
+      );
+      camera.lookAt(0, 10, -5);
+    } else if (cameraMode === 'cinematic') {
+      // Cinematic Orbit Camera: slowly sweeps around the shuttle stack to appreciate Earth curvature
+      const radius = 55;
+      const camX = Math.cos(orbitAngle) * radius;
+      const camZ = Math.sin(orbitAngle) * radius;
+      camera.position.set(camX + shakeX, -4 + shakeY, camZ);
+      camera.lookAt(0, 8, 0);
+    } else {
+      // First-Person Cockpit Camera
+      camera.position.set(shakeX, 6 + shakeY, 8.5);
+      camera.rotation.set(pitchRad * 0.4, 0, rollAngle);
+    }
+
+    // 4. Transonic Mach Shock Vapor Cone (10-18 km)
+    if (vaporConeRef.current) {
+      const inVaporRange = alt >= 10 && alt <= 18;
+      vaporConeRef.current.visible = inVaporRange;
+      if (inVaporRange) {
+        const pulse = 0.95 + Math.sin(Date.now() * 0.04) * 0.12;
+        vaporConeRef.current.scale.set(pulse, pulse, pulse);
+      }
+    }
   });
+
+  const pitchRad = ((90 - state.pitch) * Math.PI) / 180;
+  const rollRad = state.corridorOffset * -0.18;
 
   return (
     <>
-      <ambientLight intensity={state.altitude > 80 ? 0.3 : 0.8} />
-      <directionalLight position={[10, 30, 20]} intensity={state.altitude > 80 ? 3.5 : 1.8} color="#fffef0" />
+      <ambientLight intensity={state.altitude > 80 ? 0.35 : 0.85} />
+      <directionalLight position={[25, 45, 30]} intensity={state.altitude > 80 ? 3.8 : 2.0} color="#fffef4" />
 
-      <CockpitFrame gForce={state.gForce} throttle={state.throttle} stage={state.stage} />
+      {/* SPACE SHUTTLE STACK IN 3D */}
+      <group rotation={[pitchRad, 0, rollRad]}>
+        <Suspense fallback={null}>
+          <ShuttleStack
+            stage={state.stage}
+            throttle={state.throttle}
+            srbSeparated={srbSeparated}
+            etSeparated={etSeparated}
+            srbOffset={srbOffset}
+            etOffset={etOffset}
+          />
+        </Suspense>
+
+        {/* Transonic Mach 1 Vapor Cone */}
+        <mesh ref={vaporConeRef} position={[0, 6, 4]} rotation={[Math.PI / 2, 0, 0]} visible={false}>
+          <coneGeometry args={[14, 18, 32, 1, true]} />
+          <meshBasicMaterial
+            color="#ffffff"
+            transparent
+            opacity={0.38}
+            side={THREE.DoubleSide}
+            blending={THREE.AdditiveBlending}
+            depthWrite={false}
+          />
+        </mesh>
+
+        {/* Cockpit Canopy (only in cockpit mode) */}
+        {cameraMode === 'cockpit' && <CockpitCanopyFrame />}
+      </group>
+
+      {/* CAPE CANAVERAL PAD LC-39B & FLORIDA TERRAIN */}
+      <Suspense fallback={null}>
+        <CapeCanaveralPad altitude={state.altitude} />
+      </Suspense>
+
+      {/* CLOUDS IN TROPOSPHERE */}
+      <CloudDeck altitude={state.altitude} />
+
+      {/* DYNAMIC STARFIELD */}
       <DynamicStarfield altitude={state.altitude} />
-      <WorldEnvironment altitude={state.altitude} pitch={state.pitch} />
+
+      {/* CURVED EARTH HORIZON */}
+      <CurvedEarthHorizon altitude={state.altitude} pitch={state.pitch} />
     </>
   );
 }
 
-/* ---------------- MAIN LAUNCH COMPONENT ---------------- */
+/* ---------------- MAIN EXPORT COMPONENT ---------------- */
 
 interface LaunchGameProps {
   onClose: () => void;
@@ -315,7 +360,18 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
   const [countdown, setCountdown] = useState<number | null>(3);
   const [started, setStarted] = useState(false);
   const [muted, setMuted] = useState(false);
+  const [cameraMode, setCameraMode] = useState<CameraMode>('chase'); // Third person default!
   const [autoRedirectSec, setAutoRedirectSec] = useState<number | null>(null);
+
+  // Separation animation progress
+  const [srbSeparated, setSrbSeparated] = useState(false);
+  const [etSeparated, setEtSeparated] = useState(false);
+  const srbOffsetRef = useRef(0);
+  const etOffsetRef = useRef(0);
+  const [srbOffset, setSrbOffset] = useState(0);
+  const [etOffset, setEtOffset] = useState(0);
+
+  const [orbitAngle, setOrbitAngle] = useState(0.4);
 
   const stateRef = useRef(state);
   stateRef.current = state;
@@ -356,7 +412,7 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
     }
   }, [countdown]);
 
-  // Main simulation physics loop (120 Hz)
+  // Main simulation physics & staging animation loop (120 Hz)
   useEffect(() => {
     let raf = 0;
     let lastTime = performance.now();
@@ -372,6 +428,21 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
         stateRef.current = stepLaunchPhysics(stateRef.current, 1 / 120, inputRef.current, started);
         acc -= 1 / 120;
       }
+
+      // Animate SRB separation drift
+      if (srbSeparated && srbOffsetRef.current < 1.0) {
+        srbOffsetRef.current = Math.min(1.0, srbOffsetRef.current + dt * 0.4);
+        setSrbOffset(srbOffsetRef.current);
+      }
+
+      // Animate External Tank separation drift
+      if (etSeparated && etOffsetRef.current < 1.0) {
+        etOffsetRef.current = Math.min(1.0, etOffsetRef.current + dt * 0.3);
+        setEtOffset(etOffsetRef.current);
+      }
+
+      // Slow cinematic camera orbit rotation
+      setOrbitAngle((a) => a + dt * 0.15);
 
       hudClock += dt;
       if (hudClock > 0.06) {
@@ -391,24 +462,33 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
       cancelAnimationFrame(raf);
       stopRocketEngine();
     };
-  }, [started, muted]);
+  }, [started, muted, srbSeparated, etSeparated]);
 
-  // Sound triggers on milestones
+  // Detect Staging and Sound Milestones
   const prevAlt = useRef(0);
   const prevStage = useRef<1 | 2 | 'orbit'>(1);
 
   useEffect(() => {
     if (!started) return;
 
-    // Sonic boom when Mach 1 is crossed
+    // Transonic sonic boom
     if (prevAlt.current < 11 && state.altitude >= 11) {
       playSonicBoom();
     }
-    // Stage separation sound
-    if (prevStage.current === 1 && state.stage === 2) {
+
+    // SRB Separation at Stage 1 burnout
+    if (prevStage.current === 1 && state.stage === 2 && !srbSeparated) {
+      setSrbSeparated(true);
       playStageSeparationSound();
     }
-    // Orbital insertion chime
+
+    // External Tank separation when nearing orbit (altitude > 115 km)
+    if (state.altitude >= 115 && !etSeparated) {
+      setEtSeparated(true);
+      playStageSeparationSound();
+    }
+
+    // Orbital insertion triumph chord
     if (prevStage.current !== 'orbit' && state.stage === 'orbit') {
       playOrbitalInsertionChime();
       setAutoRedirectSec(5);
@@ -416,7 +496,7 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
 
     prevAlt.current = state.altitude;
     prevStage.current = state.stage;
-  }, [state.altitude, state.stage, started]);
+  }, [state.altitude, state.stage, started, srbSeparated, etSeparated]);
 
   // Auto-redirect countdown once in orbit
   useEffect(() => {
@@ -443,6 +523,9 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
+      if (e.key === 'v' || e.key === 'V') {
+        setCameraMode((c) => (c === 'chase' ? 'cinematic' : c === 'cinematic' ? 'cockpit' : 'chase'));
+      }
       if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') inputRef.current.steerLeft = true;
       if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') inputRef.current.steerRight = true;
       if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') inputRef.current.throttleUp = true;
@@ -492,16 +575,29 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
     }, 200);
   };
 
-  // Translations
+  // Translations & Layer Identification
   const isEs = lang === 'es';
-  const siteLabel = isEs ? 'CABO CAÑAVERAL, FL · PLATAFORMA 39A' : 'CAPE CANAVERAL, FL · PAD 39A';
-  const titleText = isEs ? 'DESPEGUE Y ASCENSO A ÓRBITA' : 'LAUNCH & ASCENT TO ORBIT';
-  const altitudeLabel = isEs ? 'ALTITUD' : 'ALTITUDE';
-  const speedLabel = isEs ? 'VELOCIDAD' : 'SPEED';
-  const gforceLabel = isEs ? 'FUERZA G' : 'G-FORCE';
-  const corridorLabel = isEs ? 'CORREDOR' : 'CORRIDOR';
-  const stage1Label = isEs ? 'ETAPA 1 (BOOSTER)' : 'STAGE 1 (BOOSTER)';
-  const stage2Label = isEs ? 'ETAPA 2 (VACÍO)' : 'STAGE 2 (VACUUM)';
+  const siteLabel = isEs ? 'CABO CAÑAVERAL, FL · PLATAFORMA 39B' : 'CAPE CANAVERAL, FL · PAD 39B';
+  const titleText = isEs ? 'TRANSBORDADOR ESPACIAL ATLANTIS' : 'SPACE SHUTTLE ATLANTIS';
+
+  // Get current atmospheric layer info
+  const alt = state.altitude;
+  let layerBadge = isEs ? 'TROPOSFERA · 0 - 12 KM' : 'TROPOSPHERE · 0 - 12 KM';
+  let layerDesc = isEs ? 'Atmósfera densa · Costa de Florida' : 'Dense Atmosphere · Florida Coast';
+
+  if (alt >= 12 && alt < 50) {
+    layerBadge = isEs ? 'ESTRATOSFERA · 12 - 50 KM (MAX-Q)' : 'STRATOSPHERE · 12 - 50 KM (MAX-Q)';
+    layerDesc = isEs ? 'Transónico · Mach ' + state.mach.toFixed(1) : 'Transonic · Mach ' + state.mach.toFixed(1);
+  } else if (alt >= 50 && alt < 85) {
+    layerBadge = isEs ? 'MESOSFERA · 50 - 85 KM' : 'MESOSPHERE · 50 - 85 KM';
+    layerDesc = isEs ? 'Separación de Propulsores Sólidos (SRB)' : 'Solid Rocket Booster (SRB) Separation';
+  } else if (alt >= 85 && alt < 120) {
+    layerBadge = isEs ? 'TERMOSFERA · LÍNEA DE KÁRMÁN (100 KM)' : 'THERMOSPHERE · KÁRMÁN LINE (100 KM)';
+    layerDesc = isEs ? 'Frontera del Espacio Exterior' : 'Boundary of Outer Space';
+  } else if (alt >= 120) {
+    layerBadge = isEs ? 'EXOSFERA · ÓRBITA BAJA (LEO)' : 'EXOSPHERE · LOW EARTH ORBIT (LEO)';
+    layerDesc = isEs ? 'Microgravedad (0.0 G) · Inserción Orbital' : 'Microgravity (0.0 G) · Orbital Insertion';
+  }
 
   return (
     <div
@@ -516,10 +612,18 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
       <div className="game-stage" style={{ position: 'absolute', inset: 0 }}>
         <Canvas
           dpr={[1, 1.75]}
-          camera={{ fov: 62, near: 0.1, far: 800, position: [0, 0, 0] }}
+          camera={{ fov: 60, near: 0.1, far: 1200, position: [0, -14, 48] }}
           gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
         >
-          <LaunchScene state={state} input={inputRef} />
+          <LaunchScene
+            state={state}
+            cameraMode={cameraMode}
+            srbSeparated={srbSeparated}
+            etSeparated={etSeparated}
+            srbOffset={srbOffset}
+            etOffset={etOffset}
+            orbitAngle={orbitAngle}
+          />
         </Canvas>
       </div>
 
@@ -545,7 +649,26 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
           </h2>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {/* Camera View Switcher */}
+          <button
+            type="button"
+            className="ghost-button"
+            onClick={() => {
+              setCameraMode((c) => (c === 'chase' ? 'cinematic' : c === 'cinematic' ? 'cockpit' : 'chase'));
+            }}
+            style={{
+              padding: '6px 14px',
+              fontSize: '12px',
+              borderColor: '#38bdf8',
+              color: '#38bdf8',
+              background: 'rgba(56,189,248,0.12)',
+            }}
+          >
+            🎥 {cameraMode === 'chase' ? (isEs ? '3ª Persona [V]' : 'Chase Cam [V]') : cameraMode === 'cinematic' ? (isEs ? 'Cinemática [V]' : 'Cinematic [V]') : (isEs ? 'Cabina [V]' : 'Cockpit [V]')}
+          </button>
+
+          {/* Audio toggle */}
           <button
             type="button"
             className="ghost-button"
@@ -556,8 +679,10 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
             }}
             style={{ padding: '6px 12px', fontSize: '12px' }}
           >
-            {muted ? (isEs ? '🔇 AUDIO OFF' : '🔇 AUDIO OFF') : (isEs ? '🔊 AUDIO ON' : '🔊 AUDIO ON')}
+            {muted ? '🔇 MUTE' : '🔊 AUDIO'}
           </button>
+
+          {/* Exit / Back to Museum */}
           <button
             type="button"
             className="ghost-button"
@@ -568,6 +693,35 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
           </button>
         </div>
       </header>
+
+      {/* Atmospheric Layer Tracker Pill (Top Center) */}
+      {started && !state.orbitalInsertion && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '80px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 10,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            padding: '8px 18px',
+            background: 'rgba(15, 23, 42, 0.85)',
+            border: '1px solid rgba(56, 189, 248, 0.4)',
+            borderRadius: '24px',
+            backdropFilter: 'blur(8px)',
+            pointerEvents: 'none',
+          }}
+        >
+          <span style={{ fontSize: '12px', fontWeight: 800, fontFamily: 'monospace', color: '#38bdf8', letterSpacing: '0.12em' }}>
+            🌍 {layerBadge}
+          </span>
+          <span style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px' }}>
+            {layerDesc}
+          </span>
+        </div>
+      )}
 
       {/* Countdown Overlay */}
       {countdown !== null && (
@@ -581,11 +735,11 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
             alignItems: 'center',
             zIndex: 20,
             pointerEvents: 'none',
-            background: 'radial-gradient(circle, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.8) 100%)',
+            background: 'radial-gradient(circle, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.85) 100%)',
           }}
         >
           <div style={{ fontFamily: 'monospace', fontSize: '14px', letterSpacing: '0.3em', color: '#38bdf8', marginBottom: '8px' }}>
-            {isEs ? 'SECUENCIA DE IGNICIÓN' : 'IGNITION SEQUENCE'}
+            {isEs ? 'SECUENCIA DE IGNICIÓN · CABO CAÑAVERAL' : 'IGNITION SEQUENCE · CAPE CANAVERAL'}
           </div>
           <div
             style={{
@@ -593,18 +747,18 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
               fontWeight: 900,
               fontFamily: 'monospace',
               color: countdown === 0 ? '#10b981' : '#f8fafc',
-              textShadow: '0 0 24px rgba(56,189,248,0.8)',
+              textShadow: '0 0 26px rgba(56,189,248,0.8)',
             }}
           >
             {countdown === 0 ? 'LIFTOFF!' : `T-${countdown}`}
           </div>
-          <div style={{ marginTop: '12px', fontSize: '13px', color: '#94a3b8' }}>
-            {isEs ? 'Kennedy Space Center · Cabo Cañaveral' : 'Kennedy Space Center · Cape Canaveral'}
+          <div style={{ marginTop: '12px', fontSize: '14px', color: '#94a3b8' }}>
+            {isEs ? 'Space Shuttle Atlantis · Pad 39B' : 'Space Shuttle Atlantis · Pad 39B'}
           </div>
         </div>
       )}
 
-      {/* Tactical Cockpit HUD Overlay */}
+      {/* Tactical Telemetry HUD */}
       {started && !state.orbitalInsertion && (
         <div
           style={{
@@ -613,7 +767,7 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
             left: '24px',
             zIndex: 10,
             padding: '16px 20px',
-            background: 'rgba(15, 23, 42, 0.75)',
+            background: 'rgba(15, 23, 42, 0.8)',
             border: '1px solid rgba(56, 189, 248, 0.3)',
             borderRadius: '10px',
             backdropFilter: 'blur(10px)',
@@ -623,27 +777,24 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
             pointerEvents: 'none',
           }}
         >
-          {/* Mission Timer & Status */}
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '6px' }}>
             <span style={{ fontSize: '11px', color: '#38bdf8' }}>
               T+{(state.missionTime).toFixed(1)}s
             </span>
-            <span style={{ fontSize: '11px', color: '#10b981', fontWeight: 'bold' }}>
-              {state.stage === 1 ? 'STAGE 1' : 'STAGE 2'}
+            <span style={{ fontSize: '11px', color: srbSeparated ? '#38bdf8' : '#10b981', fontWeight: 'bold' }}>
+              {srbSeparated ? 'ET + SSME' : 'SRB BOOST'}
             </span>
           </div>
 
-          {/* Altitude */}
           <div style={{ marginBottom: '8px' }}>
-            <div style={{ fontSize: '10px', color: '#94a3b8' }}>{altitudeLabel}</div>
+            <div style={{ fontSize: '10px', color: '#94a3b8' }}>ALTITUDE</div>
             <div style={{ fontSize: '1.4rem', fontWeight: 'bold', color: '#ffffff' }}>
               {state.altitude.toFixed(2)} <span style={{ fontSize: '12px', color: '#38bdf8' }}>km</span>
             </div>
           </div>
 
-          {/* Speed & Mach */}
           <div style={{ marginBottom: '8px' }}>
-            <div style={{ fontSize: '10px', color: '#94a3b8' }}>{speedLabel}</div>
+            <div style={{ fontSize: '10px', color: '#94a3b8' }}>SPEED</div>
             <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#ffffff' }}>
               {Math.round(state.velocity).toLocaleString()} <span style={{ fontSize: '11px', color: '#94a3b8' }}>km/h</span>
             </div>
@@ -652,10 +803,9 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
             </div>
           </div>
 
-          {/* G-Force */}
           <div style={{ marginBottom: '10px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#94a3b8' }}>
-              <span>{gforceLabel}</span>
+              <span>G-FORCE</span>
               <span style={{ color: state.gForce > 3.0 ? '#ef4444' : '#10b981', fontWeight: 'bold' }}>
                 {state.gForce.toFixed(2)} G
               </span>
@@ -672,18 +822,18 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
             </div>
           </div>
 
-          {/* Fuel Gauges */}
-          <div style={{ marginTop: '10px' }}>
+          {/* SRB & Tank Gauges */}
+          <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#94a3b8', marginBottom: '2px' }}>
-              <span>{state.stage === 1 ? stage1Label : stage2Label}</span>
-              <span>{Math.round((state.stage === 1 ? state.stage1Fuel : state.stage2Fuel) * 100)}%</span>
+              <span>{srbSeparated ? 'EXTERNAL TANK' : 'SOLID BOOSTERS (SRB)'}</span>
+              <span>{Math.round((srbSeparated ? state.stage2Fuel : state.stage1Fuel) * 100)}%</span>
             </div>
             <div style={{ height: '5px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden' }}>
               <div
                 style={{
                   height: '100%',
-                  width: `${(state.stage === 1 ? state.stage1Fuel : state.stage2Fuel) * 100}%`,
-                  background: state.stage === 1 && state.stage1Fuel < 0.15 ? '#ef4444' : '#10b981',
+                  width: `${(srbSeparated ? state.stage2Fuel : state.stage1Fuel) * 100}%`,
+                  background: !srbSeparated && state.stage1Fuel < 0.15 ? '#ef4444' : '#10b981',
                   transition: 'width 0.08s linear',
                 }}
               />
@@ -692,14 +842,14 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
         </div>
       )}
 
-      {/* Flight Corridor Trajectory HUD (Center reticle guidance) */}
+      {/* Flight Corridor Trajectory Indicator */}
       {started && !state.orbitalInsertion && (
         <div
           style={{
             position: 'absolute',
-            top: '50%',
+            bottom: '100px',
             left: '50%',
-            transform: 'translate(-50%, -50%)',
+            transform: 'translateX(-50%)',
             pointerEvents: 'none',
             zIndex: 10,
             display: 'flex',
@@ -707,19 +857,17 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
             alignItems: 'center',
           }}
         >
-          {/* Corridor bar */}
           <div
             style={{
               width: '260px',
-              height: '32px',
+              height: '28px',
               border: '1px solid rgba(56, 189, 248, 0.4)',
               borderRadius: '6px',
               position: 'relative',
-              background: 'rgba(2, 6, 23, 0.4)',
+              background: 'rgba(2, 6, 23, 0.5)',
               backdropFilter: 'blur(4px)',
             }}
           >
-            {/* Center target safe zone */}
             <div
               style={{
                 position: 'absolute',
@@ -732,7 +880,6 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
                 borderRight: '1px dashed #10b981',
               }}
             />
-            {/* Rocket Attitude Marker */}
             <div
               style={{
                 position: 'absolute',
@@ -749,17 +896,17 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
             />
           </div>
           <div style={{ marginTop: '6px', fontSize: '10px', fontFamily: 'monospace', color: '#94a3b8', letterSpacing: '0.1em' }}>
-            {corridorLabel} [A / D]
+            {isEs ? 'CORREDOR DE TRAYECTORIA [A / D]' : 'TRAJECTORY CORRIDOR [A / D]'}
           </div>
         </div>
       )}
 
-      {/* Stage Separation Prompt / Button */}
-      {state.readyToSeparate && (
+      {/* Stage Separation Prompt */}
+      {state.readyToSeparate && !srbSeparated && (
         <div
           style={{
             position: 'absolute',
-            bottom: '120px',
+            bottom: '140px',
             left: '50%',
             transform: 'translateX(-50%)',
             zIndex: 25,
@@ -786,11 +933,8 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
               animation: 'pulse 1s infinite alternate',
             }}
           >
-            {isEs ? '⚡ SEPARAR ETAPA 1 [ESPACIO]' : '⚡ SEPARATE STAGE 1 [SPACE]'}
+            {isEs ? '⚡ SEPARAR PROPULSORES SRB [ESPACIO]' : '⚡ SEPARATE SRB BOOSTERS [SPACE]'}
           </button>
-          <div style={{ marginTop: '8px', fontSize: '12px', color: '#fca5a5', fontFamily: 'monospace' }}>
-            {isEs ? '¡Agotamiento de propulsor detectado!' : 'Booster burnout detected!'}
-          </div>
         </div>
       )}
 
@@ -805,7 +949,7 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
             justifyContent: 'center',
             alignItems: 'center',
             zIndex: 30,
-            background: 'radial-gradient(circle, rgba(2,6,23,0.7) 0%, rgba(2,6,23,0.92) 100%)',
+            background: 'radial-gradient(circle, rgba(2,6,23,0.7) 0%, rgba(2,6,23,0.94) 100%)',
             backdropFilter: 'blur(8px)',
             color: '#f8fafc',
             textAlign: 'center',
@@ -817,7 +961,7 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
           </div>
           <h1
             style={{
-              fontSize: '2.4rem',
+              fontSize: '2.5rem',
               fontWeight: 900,
               margin: '0 0 16px',
               letterSpacing: '0.04em',
@@ -828,10 +972,10 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
           >
             {isEs ? '¡HAS ALCANZADO EL ESPACIO!' : 'ORBIT INSERTION ACHIEVED!'}
           </h1>
-          <p style={{ maxWidth: '540px', fontSize: '15px', color: '#cbd5e1', lineHeight: '1.6', margin: '0 0 24px' }}>
+          <p style={{ maxWidth: '560px', fontSize: '15px', color: '#cbd5e1', lineHeight: '1.6', margin: '0 0 24px' }}>
             {isEs
-              ? 'Has despegado desde Cabo Cañaveral, superado la atmósfera terrestre y alcanzado una velocidad orbital estable de 28,140 km/h en microgravedad.'
-              : 'You have launched from Cape Canaveral, conquered the atmosphere, and established a stable orbital velocity of 28,140 km/h in microgravity.'}
+              ? 'El Transbordador Espacial Atlantis ha superado todas las capas atmosféricas desde Cabo Cañaveral y alcanzado una velocidad orbital de 28,140 km/h en microgravedad.'
+              : 'Space Shuttle Atlantis has traversed all atmospheric layers from Cape Canaveral and achieved a stable orbital speed of 28,140 km/h in microgravity.'}
           </p>
 
           <div
@@ -839,7 +983,7 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
               display: 'grid',
               gridTemplateColumns: 'repeat(3, 1fr)',
               gap: '16px',
-              maxWidth: '500px',
+              maxWidth: '520px',
               width: '100%',
               marginBottom: '32px',
               fontFamily: 'monospace',
@@ -847,7 +991,7 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
           >
             <div style={{ padding: '12px', background: 'rgba(15,23,42,0.8)', borderRadius: '8px', border: '1px solid rgba(56,189,248,0.2)' }}>
               <div style={{ fontSize: '10px', color: '#94a3b8' }}>ALTITUDE</div>
-              <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#38bdf8' }}>135 km</div>
+              <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#38bdf8' }}>135.2 km</div>
             </div>
             <div style={{ padding: '12px', background: 'rgba(15,23,42,0.8)', borderRadius: '8px', border: '1px solid rgba(56,189,248,0.2)' }}>
               <div style={{ fontSize: '10px', color: '#94a3b8' }}>VELOCITY</div>
