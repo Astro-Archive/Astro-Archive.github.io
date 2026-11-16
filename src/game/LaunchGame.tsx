@@ -63,46 +63,7 @@ function DynamicStarfield({ altitude }: { altitude: number }) {
   return <primitive object={new THREE.Points(geo, mat)} />;
 }
 
-/** Tropospheric Cloud Layers (0-12 km) that the shuttle passes through */
-function CloudDeck({ altitude }: { altitude: number }) {
-  const cloudsRef = useRef<THREE.Group>(null);
 
-  const cloudMat = useMemo(
-    () =>
-      new THREE.MeshStandardMaterial({
-        color: '#f8fafc',
-        transparent: true,
-        opacity: 0.72,
-        roughness: 0.95,
-        depthWrite: false,
-      }),
-    []
-  );
-
-  useFrame(() => {
-    if (cloudsRef.current) {
-      cloudsRef.current.position.y = -altitude * 10 + 35;
-      cloudsRef.current.visible = altitude < 35;
-    }
-  });
-
-  return (
-    <group ref={cloudsRef}>
-      <mesh position={[-60, 0, 40]} rotation={[-Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[110, 32]} />
-        <primitive object={cloudMat} attach="material" />
-      </mesh>
-      <mesh position={[80, 8, -30]} rotation={[-Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[130, 32]} />
-        <primitive object={cloudMat} attach="material" />
-      </mesh>
-      <mesh position={[-40, 16, -70]} rotation={[-Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[95, 32]} />
-        <primitive object={cloudMat} attach="material" />
-      </mesh>
-    </group>
-  );
-}
 
 
 
@@ -219,8 +180,7 @@ function LaunchScene({
         <CapeCanaveralPad altitude={state.altitude} />
       </Suspense>
 
-      {/* CLOUDS IN TROPOSPHERE */}
-      <CloudDeck altitude={state.altitude} />
+
 
       {/* DYNAMIC STARFIELD */}
       <DynamicStarfield altitude={state.altitude} />
@@ -228,6 +188,18 @@ function LaunchScene({
 
     </>
   );
+}
+
+function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth <= breakpoint : false
+  );
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= breakpoint);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [breakpoint]);
+  return isMobile;
 }
 
 /* ---------------- MAIN EXPORT COMPONENT ---------------- */
@@ -240,6 +212,8 @@ interface LaunchGameProps {
 export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
   const { lang } = useLang();
   const t = uiFor(lang);
+  const isMobile = useIsMobile();
+  const [telemetryExpanded, setTelemetryExpanded] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const orbitControlsRef = useRef<any>(null);
 
@@ -528,7 +502,7 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
       <div className="game-stage" style={{ position: 'absolute', inset: 0 }}>
         <Canvas
           dpr={[1, 1.75]}
-          camera={{ fov: 58, near: 0.2, far: 50000, position: [0, -14, 48] }}
+          camera={{ fov: 58, near: 1.0, far: 45000, position: [0, -14, 48] }}
           gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
         >
           <LaunchScene
@@ -547,100 +521,129 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
         className="game-bar"
         style={{
           position: 'relative',
-          zIndex: 10,
+          zIndex: 15,
           display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
+          gap: isMobile ? '8px' : '0',
           justifyContent: 'space-between',
-          alignItems: 'center',
-          padding: '16px 24px',
-          background: 'linear-gradient(180deg, rgba(2,6,23,0.92) 0%, rgba(2,6,23,0) 100%)',
+          alignItems: isMobile ? 'stretch' : 'center',
+          padding: isMobile ? '10px 14px' : '14px 24px',
+          background: 'linear-gradient(180deg, rgba(2,6,23,0.95) 0%, rgba(2,6,23,0.3) 100%)',
         }}
       >
-        <div>
-          <p style={{ margin: 0, fontFamily: 'monospace', fontSize: '11px', letterSpacing: '0.15em', color: '#38bdf8' }}>
-            {siteLabel}
-          </p>
-          <h2 style={{ margin: '4px 0 0', fontSize: '1.25rem', fontWeight: 800, color: '#f8fafc', letterSpacing: '0.04em' }}>
-            {titleText}
-          </h2>
+        {/* Title & Site Row */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <p style={{ margin: 0, fontFamily: 'monospace', fontSize: isMobile ? '9.5px' : '11px', letterSpacing: '0.12em', color: '#38bdf8' }}>
+              {siteLabel}
+            </p>
+            <h2 style={{ margin: '2px 0 0', fontSize: isMobile ? '1.05rem' : '1.25rem', fontWeight: 800, color: '#f8fafc', letterSpacing: '0.03em' }}>
+              {titleText}
+            </h2>
+          </div>
+
+          {/* Quick Exit / Back Button on Mobile */}
+          {isMobile && (
+            <button
+              type="button"
+              onClick={onClose}
+              style={{
+                padding: '5px 12px',
+                fontSize: '10px',
+                fontFamily: 'monospace',
+                fontWeight: 700,
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid #475569',
+                borderRadius: '4px',
+                color: '#f8fafc',
+                cursor: 'pointer',
+              }}
+            >
+              {isEs ? 'VOLVER' : 'EXIT'}
+            </button>
+          )}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+        {/* Action Controls Row */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', justifyContent: isMobile ? 'space-between' : 'flex-end' }}>
           {/* Historical Fleet Gallery Button */}
           <button
             type="button"
             onClick={() => setGalleryOpen(true)}
             style={{
-              padding: '6px 14px',
-              fontSize: '11px',
+              padding: isMobile ? '5px 10px' : '6px 14px',
+              fontSize: isMobile ? '10px' : '11px',
               fontWeight: 800,
               fontFamily: 'monospace',
-              letterSpacing: '0.08em',
-              background: 'rgba(2, 132, 199, 0.25)',
+              letterSpacing: '0.06em',
+              background: 'rgba(2, 132, 199, 0.22)',
               border: '1px solid #0284c7',
-              borderRadius: '6px',
+              borderRadius: '4px',
               color: '#38bdf8',
               cursor: 'pointer',
-              boxShadow: '0 0 10px rgba(56, 189, 248, 0.2)',
+              boxShadow: '0 0 8px rgba(56, 189, 248, 0.2)',
             }}
           >
-            [ {isEs ? 'FLOTA HISTÓRICA' : 'SHUTTLE ARCHIVE'} ]
+            [ {isEs ? 'FLOTA' : 'SHUTTLES'} ]
           </button>
 
           {/* Camera View Preset Buttons */}
-          <button
-            type="button"
-            onClick={() => applyViewPreset('top')}
-            style={{
-              padding: '6px 10px',
-              fontSize: '11px',
-              fontFamily: 'monospace',
-              fontWeight: 700,
-              background: 'rgba(15, 23, 42, 0.8)',
-              border: '1px solid #334155',
-              borderRadius: '6px',
-              color: '#f8fafc',
-              cursor: 'pointer',
-            }}
-            title="Vista Superior [T]"
-          >
-            TOP
-          </button>
-          <button
-            type="button"
-            onClick={() => applyViewPreset('chase')}
-            style={{
-              padding: '6px 10px',
-              fontSize: '11px',
-              fontFamily: 'monospace',
-              fontWeight: 700,
-              background: 'rgba(15, 23, 42, 0.8)',
-              border: '1px solid #334155',
-              borderRadius: '6px',
-              color: '#f8fafc',
-              cursor: 'pointer',
-            }}
-            title="Cámara Trasera [C]"
-          >
-            CHASE
-          </button>
-          <button
-            type="button"
-            onClick={() => applyViewPreset('profile')}
-            style={{
-              padding: '6px 10px',
-              fontSize: '11px',
-              fontFamily: 'monospace',
-              fontWeight: 700,
-              background: 'rgba(15, 23, 42, 0.8)',
-              border: '1px solid #334155',
-              borderRadius: '6px',
-              color: '#f8fafc',
-              cursor: 'pointer',
-            }}
-            title="Perfil Lateral [P]"
-          >
-            SIDE
-          </button>
+          <div style={{ display: 'flex', gap: '3px' }}>
+            <button
+              type="button"
+              onClick={() => applyViewPreset('top')}
+              style={{
+                padding: isMobile ? '4px 7px' : '6px 10px',
+                fontSize: isMobile ? '9.5px' : '11px',
+                fontFamily: 'monospace',
+                fontWeight: 700,
+                background: 'rgba(15, 23, 42, 0.85)',
+                border: '1px solid #334155',
+                borderRadius: '4px',
+                color: '#f8fafc',
+                cursor: 'pointer',
+              }}
+              title="Vista Superior [T]"
+            >
+              TOP
+            </button>
+            <button
+              type="button"
+              onClick={() => applyViewPreset('chase')}
+              style={{
+                padding: isMobile ? '4px 7px' : '6px 10px',
+                fontSize: isMobile ? '9.5px' : '11px',
+                fontFamily: 'monospace',
+                fontWeight: 700,
+                background: 'rgba(15, 23, 42, 0.85)',
+                border: '1px solid #334155',
+                borderRadius: '4px',
+                color: '#f8fafc',
+                cursor: 'pointer',
+              }}
+              title="Cámara Trasera [C]"
+            >
+              CHASE
+            </button>
+            <button
+              type="button"
+              onClick={() => applyViewPreset('profile')}
+              style={{
+                padding: isMobile ? '4px 7px' : '6px 10px',
+                fontSize: isMobile ? '9.5px' : '11px',
+                fontFamily: 'monospace',
+                fontWeight: 700,
+                background: 'rgba(15, 23, 42, 0.85)',
+                border: '1px solid #334155',
+                borderRadius: '4px',
+                color: '#f8fafc',
+                cursor: 'pointer',
+              }}
+              title="Perfil Lateral [P]"
+            >
+              SIDE
+            </button>
+          </div>
 
           {/* Time Warp Speed Controls */}
           <div
@@ -648,18 +651,18 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
               display: 'flex',
               background: 'rgba(15, 23, 42, 0.85)',
               border: '1px solid #334155',
-              borderRadius: '6px',
+              borderRadius: '4px',
               overflow: 'hidden',
             }}
           >
-            {[0.5, 1.0, 2.0, 4.0].map((w) => (
+            {(isMobile ? [1.0, 2.0, 4.0] : [0.5, 1.0, 2.0, 4.0]).map((w) => (
               <button
                 key={w}
                 type="button"
                 onClick={() => changeTimeWarp(w)}
                 style={{
-                  padding: '5px 8px',
-                  fontSize: '10px',
+                  padding: isMobile ? '4px 6px' : '5px 8px',
+                  fontSize: isMobile ? '9px' : '10px',
                   fontFamily: 'monospace',
                   fontWeight: timeWarp === w ? 800 : 500,
                   background: timeWarp === w ? '#0284c7' : 'transparent',
@@ -682,65 +685,68 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
               else if (started) startRocketEngine();
             }}
             style={{
-              padding: '6px 12px',
-              fontSize: '11px',
+              padding: isMobile ? '4px 8px' : '6px 12px',
+              fontSize: isMobile ? '9.5px' : '11px',
               fontFamily: 'monospace',
               fontWeight: 700,
               background: 'rgba(15, 23, 42, 0.8)',
               border: '1px solid #334155',
-              borderRadius: '6px',
+              borderRadius: '4px',
               color: muted ? '#94a3b8' : '#38bdf8',
               cursor: 'pointer',
             }}
           >
-            {muted ? 'AUDIO OFF' : 'AUDIO ON'}
+            {muted ? 'MUTED' : 'AUDIO'}
           </button>
 
-          {/* Exit / Back to Museum */}
-          <button
-            type="button"
-            onClick={onClose}
-            style={{
-              padding: '6px 14px',
-              fontSize: '11px',
-              fontFamily: 'monospace',
-              fontWeight: 700,
-              background: 'transparent',
-              border: '1px solid #475569',
-              borderRadius: '6px',
-              color: '#f8fafc',
-              cursor: 'pointer',
-            }}
-          >
-            {t.backToMuseum}
-          </button>
+          {/* Desktop Exit / Back to Museum */}
+          {!isMobile && (
+            <button
+              type="button"
+              onClick={onClose}
+              style={{
+                padding: '6px 14px',
+                fontSize: '11px',
+                fontFamily: 'monospace',
+                fontWeight: 700,
+                background: 'transparent',
+                border: '1px solid #475569',
+                borderRadius: '4px',
+                color: '#f8fafc',
+                cursor: 'pointer',
+              }}
+            >
+              {t.backToMuseum}
+            </button>
+          )}
         </div>
       </header>
 
-      {/* Atmospheric Layer Tracker Pill (Top Center) */}
+      {/* Atmospheric Layer Tracker Pill */}
       {started && !state.orbitalInsertion && (
         <div
           style={{
             position: 'absolute',
-            top: '80px',
+            top: isMobile ? (telemetryExpanded ? '184px' : '136px') : '80px',
             left: '50%',
             transform: 'translateX(-50%)',
             zIndex: 10,
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            padding: '8px 20px',
+            padding: isMobile ? '4px 14px' : '8px 20px',
             background: 'rgba(15, 23, 42, 0.88)',
             border: '1px solid rgba(56, 189, 248, 0.45)',
-            borderRadius: '24px',
-            backdropFilter: 'blur(10px)',
+            borderRadius: '16px',
+            backdropFilter: 'blur(8px)',
             pointerEvents: 'none',
+            whiteSpace: 'nowrap',
           }}
         >
-          <span style={{ fontSize: '12px', fontWeight: 800, fontFamily: 'monospace', color: '#38bdf8', letterSpacing: '0.12em' }}>
+          <span style={{ fontSize: isMobile ? '10px' : '12px', fontWeight: 800, fontFamily: 'monospace', color: '#38bdf8', letterSpacing: '0.1em' }}>
             {layerBadge}
           </span>
-          <span style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px', fontFamily: 'monospace' }}>
+          <span style={{ fontSize: isMobile ? '9px' : '10px', color: '#94a3b8', marginTop: '2px', fontFamily: 'monospace' }}>
             {layerDesc}
           </span>
         </div>
@@ -761,12 +767,12 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
             background: 'radial-gradient(circle, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.85) 100%)',
           }}
         >
-          <div style={{ fontFamily: 'monospace', fontSize: '13px', letterSpacing: '0.3em', color: '#38bdf8', marginBottom: '8px' }}>
+          <div style={{ fontFamily: 'monospace', fontSize: isMobile ? '11px' : '13px', letterSpacing: '0.25em', color: '#38bdf8', marginBottom: '8px' }}>
             // STS-135 LAUNCH SEQUENCE · PAD 39B //
           </div>
           <div
             style={{
-              fontSize: '5.5rem',
+              fontSize: isMobile ? '4rem' : '5.5rem',
               fontWeight: 900,
               fontFamily: 'monospace',
               color: countdown === 0 ? '#10b981' : '#f8fafc',
@@ -775,14 +781,111 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
           >
             {countdown === 0 ? 'LIFTOFF!' : `T-${countdown}`}
           </div>
-          <div style={{ marginTop: '12px', fontSize: '13px', color: '#94a3b8', fontFamily: 'monospace' }}>
+          <div style={{ marginTop: '12px', fontSize: isMobile ? '11px' : '13px', color: '#94a3b8', fontFamily: 'monospace' }}>
             Kennedy Space Center · Cape Canaveral, FL
           </div>
         </div>
       )}
 
-      {/* Comprehensive Aerospace Telemetry Panel (Left) */}
-      {started && !state.orbitalInsertion && (
+      {/* Mobile Compact Telemetry Ribbon (Top) */}
+      {isMobile && started && !state.orbitalInsertion && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '78px',
+            left: '12px',
+            right: '12px',
+            zIndex: 12,
+            padding: '8px 12px',
+            background: 'rgba(11, 17, 32, 0.92)',
+            border: '1px solid rgba(56, 189, 248, 0.35)',
+            borderRadius: '6px',
+            backdropFilter: 'blur(8px)',
+            fontFamily: 'monospace',
+            color: '#e2e8f0',
+          }}
+        >
+          {/* Key Metrics Row */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px' }}>
+            <div>
+              <span style={{ color: '#64748b', fontSize: '8.5px', display: 'block' }}>ALTITUD</span>
+              <span style={{ fontWeight: 800, color: '#ffffff' }}>{state.altitude.toFixed(1)} km</span>
+            </div>
+            <div>
+              <span style={{ color: '#64748b', fontSize: '8.5px', display: 'block' }}>VELOCIDAD</span>
+              <span style={{ fontWeight: 800, color: '#ffffff' }}>{Math.round(state.velocity).toLocaleString()} km/h</span>
+              <span style={{ color: '#38bdf8', fontSize: '9px', marginLeft: '3px' }}>M{state.mach.toFixed(1)}</span>
+            </div>
+            <div>
+              <span style={{ color: '#64748b', fontSize: '8.5px', display: 'block' }}>PRESIÓN Q</span>
+              <span style={{ fontWeight: 800, color: state.dynamicPressure > 28 ? '#f59e0b' : '#38bdf8' }}>
+                {state.dynamicPressure.toFixed(0)} kPa
+              </span>
+            </div>
+            <div>
+              <span style={{ color: '#64748b', fontSize: '8.5px', display: 'block' }}>
+                {srbSeparated ? 'ET' : 'SRB'}
+              </span>
+              <span style={{ fontWeight: 800, color: '#10b981' }}>
+                {Math.round((srbSeparated ? state.stage2Fuel : state.stage1Fuel) * 100)}%
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setTelemetryExpanded(!telemetryExpanded)}
+              style={{
+                background: 'rgba(56, 189, 248, 0.15)',
+                border: '1px solid rgba(56, 189, 248, 0.35)',
+                borderRadius: '4px',
+                color: '#38bdf8',
+                fontSize: '9px',
+                padding: '3px 6px',
+                cursor: 'pointer',
+              }}
+              title="Alternar más estadísticas"
+            >
+              {telemetryExpanded ? '▲' : '▼'}
+            </button>
+          </div>
+
+          {/* Optional Expanded Drawer on Mobile */}
+          {telemetryExpanded && (
+            <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', fontSize: '10px' }}>
+              <div>
+                <span style={{ color: '#64748b', fontSize: '8px', display: 'block' }}>DISTANCIA</span>
+                <span>{state.downrangeDistance.toFixed(1)} km</span>
+              </div>
+              <div>
+                <span style={{ color: '#64748b', fontSize: '8px', display: 'block' }}>APOGEO</span>
+                <span style={{ color: '#10b981' }}>{state.projectedApogee.toFixed(0)} km</span>
+              </div>
+              <div>
+                <span style={{ color: '#64748b', fontSize: '8px', display: 'block' }}>FUERZA G</span>
+                <span>{state.gForce.toFixed(2)} G</span>
+              </div>
+              <div>
+                <span style={{ color: '#64748b', fontSize: '8px', display: 'block' }}>MASA PROP.</span>
+                <span>{Math.round(state.propellantMass)} t</span>
+              </div>
+            </div>
+          )}
+
+          {/* Mini Fuel Bar */}
+          <div style={{ height: '3px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', overflow: 'hidden', marginTop: '6px' }}>
+            <div
+              style={{
+                height: '100%',
+                width: `${(srbSeparated ? state.stage2Fuel : state.stage1Fuel) * 100}%`,
+                background: !srbSeparated && state.stage1Fuel < 0.15 ? '#ef4444' : '#10b981',
+                transition: 'width 0.08s linear',
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Desktop Comprehensive Telemetry Panel (Left) */}
+      {!isMobile && started && !state.orbitalInsertion && (
         <div
           style={{
             position: 'absolute',
@@ -792,7 +895,7 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
             padding: '14px 18px',
             background: 'rgba(11, 17, 32, 0.85)',
             border: '1px solid rgba(56, 189, 248, 0.35)',
-            borderRadius: '10px',
+            borderRadius: '6px',
             backdropFilter: 'blur(10px)',
             fontFamily: 'monospace',
             color: '#e2e8f0',
@@ -897,8 +1000,8 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
         </div>
       )}
 
-      {/* Free View Hint (Top Right) */}
-      {started && !state.orbitalInsertion && (
+      {/* Free View Hint (Desktop Only) */}
+      {!isMobile && started && !state.orbitalInsertion && (
         <div
           style={{
             position: 'absolute',
@@ -908,7 +1011,7 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
             padding: '8px 14px',
             background: 'rgba(11, 17, 32, 0.75)',
             border: '1px solid rgba(56, 189, 248, 0.25)',
-            borderRadius: '8px',
+            borderRadius: '6px',
             fontFamily: 'monospace',
             fontSize: '10px',
             color: '#94a3b8',
@@ -924,98 +1027,201 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
         </div>
       )}
 
-      {/* Flight Corridor Trajectory Indicator */}
+      {/* Flight Controls (Bottom Container - Responsive Layout) */}
       {started && !state.orbitalInsertion && (
         <div
           style={{
             position: 'absolute',
-            bottom: '100px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            pointerEvents: 'none',
-            zIndex: 10,
+            bottom: isMobile ? '12px' : '24px',
+            left: 0,
+            right: 0,
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
+            gap: isMobile ? '8px' : '14px',
+            padding: isMobile ? '0 14px' : '0 24px',
+            zIndex: 15,
+            pointerEvents: 'none',
           }}
         >
+          {/* Stage Separation Prompt */}
+          {state.readyToSeparate && !srbSeparated && (
+            <div style={{ pointerEvents: 'auto', marginBottom: '4px' }}>
+              <button
+                type="button"
+                onClick={triggerSeparation}
+                style={{
+                  padding: isMobile ? '10px 20px' : '14px 34px',
+                  fontSize: isMobile ? '11.5px' : '1rem',
+                  fontWeight: 800,
+                  fontFamily: 'monospace',
+                  letterSpacing: '0.08em',
+                  color: '#ffffff',
+                  background: 'linear-gradient(135deg, #f97316 0%, #dc2626 100%)',
+                  border: '2px solid #fca5a5',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  boxShadow: '0 0 25px rgba(239, 68, 68, 0.7)',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                [ {isEs ? 'SEPARAR PROPULSORES SRB' : 'SEPARATE SRB BOOSTERS'} ]
+              </button>
+            </div>
+          )}
+
+          {/* Flight Corridor Indicator */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', pointerEvents: 'none' }}>
+            <div
+              style={{
+                width: isMobile ? '190px' : '260px',
+                height: isMobile ? '18px' : '24px',
+                border: '1px solid rgba(56, 189, 248, 0.4)',
+                borderRadius: '4px',
+                position: 'relative',
+                background: 'rgba(2, 6, 23, 0.65)',
+                backdropFilter: 'blur(4px)',
+              }}
+            >
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  bottom: 0,
+                  left: '35%',
+                  width: '30%',
+                  background: 'rgba(16, 185, 129, 0.25)',
+                  borderLeft: '1px dashed #10b981',
+                  borderRight: '1px dashed #10b981',
+                }}
+              />
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: `${50 + state.corridorOffset * 45}%`,
+                  transform: 'translate(-50%, -50%)',
+                  width: isMobile ? '10px' : '12px',
+                  height: isMobile ? '10px' : '12px',
+                  borderRadius: '50%',
+                  background: Math.abs(state.corridorOffset) > 0.4 ? '#ef4444' : '#38bdf8',
+                  boxShadow: '0 0 8px #38bdf8',
+                  transition: 'left 0.08s ease-out',
+                }}
+              />
+            </div>
+            <div style={{ marginTop: '3px', fontSize: '8.5px', fontFamily: 'monospace', color: '#94a3b8', letterSpacing: '0.08em' }}>
+              {isEs ? 'CORREDOR [A / D]' : 'CORRIDOR [A / D]'}
+            </div>
+          </div>
+
+          {/* Status Message Ticker */}
           <div
             style={{
-              width: '260px',
-              height: '26px',
-              border: '1px solid rgba(56, 189, 248, 0.4)',
-              borderRadius: '6px',
-              position: 'relative',
-              background: 'rgba(2, 6, 23, 0.55)',
-              backdropFilter: 'blur(4px)',
-            }}
-          >
-            <div
-              style={{
-                position: 'absolute',
-                top: 0,
-                bottom: 0,
-                left: '35%',
-                width: '30%',
-                background: 'rgba(16, 185, 129, 0.25)',
-                borderLeft: '1px dashed #10b981',
-                borderRight: '1px dashed #10b981',
-              }}
-            />
-            <div
-              style={{
-                position: 'absolute',
-                top: '50%',
-                left: `${50 + state.corridorOffset * 45}%`,
-                transform: 'translate(-50%, -50%)',
-                width: '12px',
-                height: '12px',
-                borderRadius: '50%',
-                background: Math.abs(state.corridorOffset) > 0.4 ? '#ef4444' : '#38bdf8',
-                boxShadow: '0 0 10px #38bdf8',
-                transition: 'left 0.08s ease-out',
-              }}
-            />
-          </div>
-          <div style={{ marginTop: '5px', fontSize: '9px', fontFamily: 'monospace', color: '#94a3b8', letterSpacing: '0.1em' }}>
-            {isEs ? 'CORREDOR DE TRAYECTORIA [A / D]' : 'TRAJECTORY CORRIDOR [A / D]'}
-          </div>
-        </div>
-      )}
-
-      {/* Stage Separation Prompt */}
-      {state.readyToSeparate && !srbSeparated && (
-        <div
-          style={{
-            position: 'absolute',
-            bottom: '140px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 25,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-          }}
-        >
-          <button
-            type="button"
-            onClick={triggerSeparation}
-            style={{
-              padding: '14px 34px',
-              fontSize: '1.05rem',
-              fontWeight: 800,
               fontFamily: 'monospace',
-              letterSpacing: '0.12em',
-              color: '#ffffff',
-              background: 'linear-gradient(135deg, #f97316 0%, #dc2626 100%)',
-              border: '2px solid #fca5a5',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              boxShadow: '0 0 25px rgba(239, 68, 68, 0.7)',
+              fontSize: isMobile ? '9.5px' : '11px',
+              color: '#38bdf8',
+              letterSpacing: '0.08em',
+              textAlign: 'center',
+              maxWidth: '92%',
+              padding: isMobile ? '3px 12px' : '6px 16px',
+              background: 'rgba(2,6,23,0.85)',
+              borderRadius: '12px',
+              border: '1px solid rgba(56,189,248,0.25)',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              pointerEvents: 'none',
             }}
           >
-            [ {isEs ? 'SEPARAR PROPULSORES SRB (ESPACIO)' : 'SEPARATE SRB BOOSTERS (SPACE)'} ]
-          </button>
+            {state.statusText}
+          </div>
+
+          {/* Tactical Action Buttons Row */}
+          <div
+            style={{
+              display: 'flex',
+              gap: isMobile ? '10px' : '16px',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: isMobile ? '100%' : 'auto',
+              pointerEvents: 'auto',
+            }}
+          >
+            <button
+              type="button"
+              className="ctrl"
+              onPointerDown={() => handleSteer('left', true)}
+              onPointerUp={() => handleSteer('left', false)}
+              onPointerLeave={() => handleSteer('left', false)}
+              style={{
+                width: isMobile ? '46px' : '54px',
+                height: isMobile ? '44px' : '54px',
+                fontSize: isMobile ? '16px' : '18px',
+                fontFamily: 'monospace',
+                fontWeight: 800,
+                borderRadius: '6px',
+                background: 'rgba(15,23,42,0.92)',
+                border: '1px solid rgba(56,189,248,0.4)',
+                color: '#38bdf8',
+                cursor: 'pointer',
+              }}
+              aria-label="Izquierda"
+            >
+              &lt;
+            </button>
+
+            {/* Throttle Boost Button */}
+            <button
+              type="button"
+              className="ctrl"
+              onPointerDown={() => handleThrottle(true)}
+              onPointerUp={() => handleThrottle(false)}
+              onPointerLeave={() => handleThrottle(false)}
+              style={{
+                flex: isMobile ? 1 : 'none',
+                maxWidth: isMobile ? '240px' : 'none',
+                padding: isMobile ? '0 18px' : '0 28px',
+                height: isMobile ? '44px' : '54px',
+                fontSize: isMobile ? '11.5px' : '13px',
+                fontWeight: 800,
+                fontFamily: 'monospace',
+                letterSpacing: '0.08em',
+                borderRadius: '6px',
+                background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+                border: '1px solid #38bdf8',
+                color: '#ffffff',
+                cursor: 'pointer',
+                boxShadow: '0 0 15px rgba(56,189,248,0.3)',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              [ {isEs ? 'EMPUJE / BOOST' : 'BOOST / THRUST'} ]
+            </button>
+
+            <button
+              type="button"
+              className="ctrl"
+              onPointerDown={() => handleSteer('right', true)}
+              onPointerUp={() => handleSteer('right', false)}
+              onPointerLeave={() => handleSteer('right', false)}
+              style={{
+                width: isMobile ? '46px' : '54px',
+                height: isMobile ? '44px' : '54px',
+                fontSize: isMobile ? '16px' : '18px',
+                fontFamily: 'monospace',
+                fontWeight: 800,
+                borderRadius: '6px',
+                background: 'rgba(15,23,42,0.92)',
+                border: '1px solid rgba(56,189,248,0.4)',
+                color: '#38bdf8',
+                cursor: 'pointer',
+              }}
+              aria-label="Derecha"
+            >
+              &gt;
+            </button>
+          </div>
         </div>
       )}
 
@@ -1042,7 +1248,7 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
           </div>
           <h1
             style={{
-              fontSize: '2.5rem',
+              fontSize: isMobile ? '1.8rem' : '2.5rem',
               fontWeight: 900,
               margin: '0 0 16px',
               letterSpacing: '0.04em',
@@ -1054,7 +1260,7 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
           >
             {isEs ? '¡HAS ALCANZADO EL ESPACIO!' : 'ORBIT INSERTION ACHIEVED!'}
           </h1>
-          <p style={{ maxWidth: '560px', fontSize: '14px', color: '#cbd5e1', lineHeight: '1.6', margin: '0 0 24px', fontFamily: 'monospace' }}>
+          <p style={{ maxWidth: '560px', fontSize: isMobile ? '12px' : '14px', color: '#cbd5e1', lineHeight: '1.6', margin: '0 0 24px', fontFamily: 'monospace' }}>
             {isEs
               ? 'El Transbordador Espacial Atlantis ha superado todas las capas atmosféricas desde Cabo Cañaveral y alcanzado una velocidad orbital de 28,140 km/h en microgravedad.'
               : 'Space Shuttle Atlantis has traversed all atmospheric layers from Cape Canaveral and achieved a stable orbital speed of 28,140 km/h in microgravity.'}
@@ -1064,24 +1270,24 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
             style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: '16px',
+              gap: isMobile ? '8px' : '16px',
               maxWidth: '520px',
               width: '100%',
-              marginBottom: '32px',
+              marginBottom: '28px',
               fontFamily: 'monospace',
             }}
           >
-            <div style={{ padding: '12px', background: 'rgba(15,23,42,0.85)', borderRadius: '8px', border: '1px solid rgba(56,189,248,0.2)' }}>
-              <div style={{ fontSize: '10px', color: '#94a3b8' }}>ALTITUDE</div>
-              <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#38bdf8' }}>135.2 km</div>
+            <div style={{ padding: isMobile ? '8px' : '12px', background: 'rgba(15,23,42,0.85)', borderRadius: '6px', border: '1px solid rgba(56,189,248,0.2)' }}>
+              <div style={{ fontSize: '9px', color: '#94a3b8' }}>ALTITUDE</div>
+              <div style={{ fontSize: isMobile ? '14px' : '18px', fontWeight: 'bold', color: '#38bdf8' }}>135.2 km</div>
             </div>
-            <div style={{ padding: '12px', background: 'rgba(15,23,42,0.85)', borderRadius: '8px', border: '1px solid rgba(56,189,248,0.2)' }}>
-              <div style={{ fontSize: '10px', color: '#94a3b8' }}>VELOCITY</div>
-              <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#10b981' }}>28,140 km/h</div>
+            <div style={{ padding: isMobile ? '8px' : '12px', background: 'rgba(15,23,42,0.85)', borderRadius: '6px', border: '1px solid rgba(56,189,248,0.2)' }}>
+              <div style={{ fontSize: '9px', color: '#94a3b8' }}>VELOCITY</div>
+              <div style={{ fontSize: isMobile ? '14px' : '18px', fontWeight: 'bold', color: '#10b981' }}>28,140 km/h</div>
             </div>
-            <div style={{ padding: '12px', background: 'rgba(15,23,42,0.85)', borderRadius: '8px', border: '1px solid rgba(56,189,248,0.2)' }}>
-              <div style={{ fontSize: '10px', color: '#94a3b8' }}>G-FORCE</div>
-              <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#e2e8f0' }}>0.00 G</div>
+            <div style={{ padding: isMobile ? '8px' : '12px', background: 'rgba(15,23,42,0.85)', borderRadius: '6px', border: '1px solid rgba(56,189,248,0.2)' }}>
+              <div style={{ fontSize: '9px', color: '#94a3b8' }}>G-FORCE</div>
+              <div style={{ fontSize: isMobile ? '14px' : '18px', fontWeight: 'bold', color: '#e2e8f0' }}>0.00 G</div>
             </div>
           </div>
 
@@ -1089,15 +1295,15 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
             type="button"
             onClick={redirectToSimulator}
             style={{
-              padding: '16px 36px',
-              fontSize: '1.1rem',
+              padding: isMobile ? '12px 24px' : '16px 36px',
+              fontSize: isMobile ? '12px' : '1.1rem',
               fontWeight: 800,
               fontFamily: 'monospace',
               letterSpacing: '0.08em',
               color: '#020617',
               background: 'linear-gradient(135deg, #38bdf8 0%, #10b981 100%)',
               border: 'none',
-              borderRadius: '8px',
+              borderRadius: '6px',
               cursor: 'pointer',
               boxShadow: '0 0 30px rgba(56, 189, 248, 0.6)',
             }}
@@ -1106,115 +1312,6 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
               ? `ENTRAR AL SIMULADOR ESPACIAL 3D (${autoRedirectSec ?? 5}s)`
               : `ENTER 3D SPACE SIMULATOR (${autoRedirectSec ?? 5}s)`} ]
           </button>
-        </div>
-      )}
-
-      {/* Flight Controls (Bottom) */}
-      {started && !state.orbitalInsertion && (
-        <div
-          style={{
-            position: 'absolute',
-            bottom: '24px',
-            left: 0,
-            right: 0,
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            padding: '0 24px',
-            zIndex: 15,
-            pointerEvents: 'auto',
-          }}
-        >
-          {/* Tactical Steering Pads */}
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button
-              type="button"
-              className="ctrl"
-              onPointerDown={() => handleSteer('left', true)}
-              onPointerUp={() => handleSteer('left', false)}
-              onPointerLeave={() => handleSteer('left', false)}
-              style={{
-                width: '54px',
-                height: '54px',
-                fontSize: '18px',
-                fontFamily: 'monospace',
-                fontWeight: 800,
-                borderRadius: '8px',
-                background: 'rgba(15,23,42,0.9)',
-                border: '1px solid rgba(56,189,248,0.4)',
-                color: '#38bdf8',
-                cursor: 'pointer',
-              }}
-            >
-              &lt;
-            </button>
-            <button
-              type="button"
-              className="ctrl"
-              onPointerDown={() => handleSteer('right', true)}
-              onPointerUp={() => handleSteer('right', false)}
-              onPointerLeave={() => handleSteer('right', false)}
-              style={{
-                width: '54px',
-                height: '54px',
-                fontSize: '18px',
-                fontFamily: 'monospace',
-                fontWeight: 800,
-                borderRadius: '8px',
-                background: 'rgba(15,23,42,0.9)',
-                border: '1px solid rgba(56,189,248,0.4)',
-                color: '#38bdf8',
-                cursor: 'pointer',
-              }}
-            >
-              &gt;
-            </button>
-          </div>
-
-          {/* Status Message Ticker */}
-          <div
-            style={{
-              fontFamily: 'monospace',
-              fontSize: '11px',
-              color: '#38bdf8',
-              letterSpacing: '0.1em',
-              textAlign: 'center',
-              maxWidth: '420px',
-              padding: '6px 16px',
-              background: 'rgba(2,6,23,0.8)',
-              borderRadius: '20px',
-              border: '1px solid rgba(56,189,248,0.25)',
-            }}
-          >
-            {state.statusText}
-          </div>
-
-          {/* Throttle Boost Button */}
-          <div>
-            <button
-              type="button"
-              className="ctrl"
-              onPointerDown={() => handleThrottle(true)}
-              onPointerUp={() => handleThrottle(false)}
-              onPointerLeave={() => handleThrottle(false)}
-              style={{
-                padding: '0 26px',
-                height: '54px',
-                fontSize: '13px',
-                fontWeight: 800,
-                fontFamily: 'monospace',
-                letterSpacing: '0.08em',
-                borderRadius: '8px',
-                background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
-                border: '1px solid #38bdf8',
-                color: '#ffffff',
-                cursor: 'pointer',
-                boxShadow: '0 0 15px rgba(56,189,248,0.3)',
-              }}
-            >
-              [ {isEs ? 'EMPUJE / BOOST' : 'BOOST / THRUST'} ]
-            </button>
-          </div>
         </div>
       )}
 

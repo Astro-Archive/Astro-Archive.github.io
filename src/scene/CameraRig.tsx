@@ -58,13 +58,21 @@ export function CameraRig({ progress, reduced }: CameraRigProps) {
 
     // En pantallas verticales la cámara se aleja para que el artefacto quepa a lo ancho.
     const aspect = size.width / Math.max(1, size.height);
-    const pullback = Math.min(1.9, Math.max(1, 1.4 / aspect));
+    const isPortrait = aspect < 1.05;
+    const pullback = Math.min(1.75, Math.max(1, 1.35 / Math.max(0.6, aspect)));
     tmpPos.sub(tmpTarget).multiplyScalar(pullback).add(tmpTarget);
 
-    // Vertical: apunta por debajo para dejar el artefacto en la mitad superior (la tarjeta ocupa abajo).
-    if (aspect < 1.05) tmpTarget.y -= 2.6;
+    // Vertical: centra el modelo en pantallas móviles y evita que se desplace fuera del marco
+    if (isPortrait) {
+      // En la portada el modelo queda centrado; en las estaciones se ajusta suavemente hacia arriba
+      if (t > 0.06) {
+        tmpTarget.y -= 0.8;
+      }
+      tmpTarget.x *= 0.35;
+      tmpPos.x *= 0.35;
+    }
 
-    if (!reduced) {
+    if (!reduced && !isPortrait) {
       tmpPos.x += pointer.current.x * 0.7;
       tmpPos.y -= pointer.current.y * 0.45;
     }

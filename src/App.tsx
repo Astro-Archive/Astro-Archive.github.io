@@ -92,11 +92,12 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // al cerrar un minijuego, el foco vuelve al botón que lo abrió
+  // al cerrar un minijuego, el foco vuelve de manera segura sin saltos de scroll
   const closeGame = () => {
     setGame(null);
     requestAnimationFrame(() => {
-      document.querySelector<HTMLButtonElement>('.play-button')?.focus();
+      const btn = document.querySelector<HTMLButtonElement>('.play-button, .hero-tour-button');
+      if (btn) btn.focus({ preventScroll: true });
     });
   };
 
@@ -179,7 +180,7 @@ export default function App() {
             }}
             aria-label={lang === 'es' ? 'Despegar al Espacio' : 'Launch to Space'}
           >
-            🚀 {lang === 'es' ? 'Despegar al Espacio' : 'Launch to Space'}
+            {lang === 'es' ? 'Despegar al Espacio' : 'Launch to Space'}
           </button>
           <LanguageSwitch />
           <a
@@ -208,28 +209,31 @@ export default function App() {
           {t.heroLine2}
         </p>
         <p className="hero-hint">{t.heroHint}</p>
-        <div style={{ marginTop: '18px' }}>
+        <div style={{ marginTop: '20px' }}>
           <button
             type="button"
-            className="ghost-button"
-            onClick={() => setGame('launch')}
+            className="ghost-button hero-tour-button"
+            onClick={() => goTo(0)}
             style={{
-              padding: '10px 22px',
-              fontSize: '13px',
+              padding: '11px 24px',
+              fontSize: '12px',
               fontWeight: 700,
-              letterSpacing: '0.04em',
-              background: 'rgba(14, 165, 233, 0.18)',
-              borderColor: '#38bdf8',
-              color: '#38bdf8',
-              boxShadow: '0 0 20px rgba(56, 189, 248, 0.25)',
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
+              background: 'rgba(255, 107, 53, 0.15)',
+              borderColor: 'rgba(255, 107, 53, 0.6)',
+              color: '#ffffff',
+              boxShadow: '0 0 16px rgba(255, 107, 53, 0.22)',
+              borderRadius: '6px',
+              cursor: 'pointer',
               display: 'inline-flex',
               alignItems: 'center',
               gap: '8px',
-              cursor: 'pointer',
             }}
+            aria-label={lang === 'es' ? 'Iniciar recorrido' : 'Start tour'}
           >
-            <span>🚀</span>
-            <span>{lang === 'es' ? 'Misión de Despegue (Cabo Cañaveral)' : 'Launch Mission (Cape Canaveral)'}</span>
+            <span>{lang === 'es' ? 'Iniciar recorrido' : 'Start tour'}</span>
+            <span aria-hidden="true">↓</span>
           </button>
         </div>
       </div>

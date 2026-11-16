@@ -11,8 +11,7 @@ export function CapeCanaveralPad({ altitude }: CapeCanaveralPadProps) {
   const padGltf = useGLTF('models/cape-canaveral-pad.glb');
   const padScene = useMemo(() => padGltf.scene.clone(true), [padGltf]);
 
-  // 2. High-resolution authentic satellite aerial photo of Cape Canaveral Pad 39
-  // along with a smooth feathered alpha mask that eliminates any hard rectangular borders
+  // 2. High-resolution authentic satellite aerial photo of Cape Canaveral Pad 39, crawlerway and coast
   const [aerialTex, alphaMaskTex] = useTexture([
     'textures/cape-canaveral-wide.jpg',
     'textures/cape-canaveral-alpha.png',
@@ -39,53 +38,40 @@ export function CapeCanaveralPad({ altitude }: CapeCanaveralPadProps) {
 
   return (
     <group position={[0, groundY, 0]}>
-      {/* 1. 3D Mobile Launcher & Umbilical Tower Model (detailed up close) */}
+      {/* 1. 3D Mobile Launcher & Umbilical Tower Model (up close during launch) */}
       {altitude < 30 && (
         <group position={[-6.5, 0, 0]} scale={padScale}>
           <primitive object={padScene} />
         </group>
       )}
 
-      {/* 2. High-Resolution Satellite Aerial Photography of LC-39B Pad & Coast */}
-      {/* Feathered with alphaMap so the outer borders dissolve into the landscape with 0 seams */}
-      <mesh position={[-38, -0.2, 22]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[3400, 2251, 16, 16]} />
+      {/* 2. High-Resolution Satellite Aerial Photography of LC-39B Pad, Coast & Ocean */}
+      {/* Aspect ratio 1024x678 = 1.5103. Large seamless scale, no coplanar layering to eliminate Z-fighting */}
+      <mesh position={[-42, -0.2, 24]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[7200, 4767, 1, 1]} />
         <meshStandardMaterial
           map={aerialTex}
-          alphaMap={alphaMaskTex}
-          transparent={true}
           roughness={0.92}
-          metalness={0.05}
-          depthWrite={false}
+          metalness={0.06}
+          depthWrite={true}
+          depthTest={true}
         />
       </mesh>
 
-      {/* 3. Vast Florida Continent & Merritt Island Wetlands Plane (West) */}
-      <mesh position={[-22000, -0.6, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[44000, 52000]} />
-        <meshStandardMaterial color="#1e2c1c" roughness={0.94} metalness={0.06} />
+      {/* 3. Vast Unified Coastal Horizon Disc (placed 12 units below to strictly prevent any Z-fighting) */}
+      <mesh position={[0, -12, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[48000, 64]} />
+        <meshStandardMaterial
+          color="#092232"
+          roughness={0.7}
+          metalness={0.2}
+          depthWrite={true}
+          depthTest={true}
+        />
       </mesh>
 
-      {/* 4. Vast Atlantic Ocean Plane extending to the horizon (East) */}
-      <mesh position={[22000, -0.5, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[44000, 52000]} />
-        <meshStandardMaterial color="#0c384e" roughness={0.25} metalness={0.25} />
-      </mesh>
-
-      {/* 5. Sandy Beach Coastline Strip matching the Florida coast angle */}
-      <mesh position={[580, -0.52, 0]} rotation={[-Math.PI / 2, 0, -0.61]}>
-        <planeGeometry args={[180, 52000]} />
-        <meshStandardMaterial color="#b09f7a" roughness={0.95} />
-      </mesh>
-
-      {/* 6. Enormous Horizon Ground Ring so the world is never cut off */}
-      <mesh position={[0, -0.9, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[0, 48000, 64]} />
-        <meshStandardMaterial color="#0b2c3d" roughness={0.5} />
-      </mesh>
-
-      {/* 7. Pad Perimeter Floodlights for dramatic liftoff lighting */}
-      {altitude < 12 && (
+      {/* 4. Pad Perimeter Floodlights for liftoff lighting */}
+      {altitude < 10 && (
         <>
           <pointLight color="#fef08a" intensity={45} distance={140} position={[-30, 22, 30]} />
           <pointLight color="#fef08a" intensity={45} distance={140} position={[30, 22, 30]} />

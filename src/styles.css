@@ -122,7 +122,7 @@ body {
   margin: 0;
   padding: 2px;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: 6px;
   background: rgba(255, 255, 255, 0.02);
 }
 
@@ -132,7 +132,7 @@ body {
   align-items: center;
   justify-content: center;
   padding: 6px 8px;
-  border-radius: 999px;
+  border-radius: 4px;
   font-family: var(--mono);
   font-size: 9px;
   letter-spacing: 0.12em;
@@ -218,7 +218,7 @@ body {
   text-decoration: none;
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: 6px;
   padding: 9px 16px;
   cursor: pointer;
   transition: border-color 0.25s ease, background 0.25s ease, color 0.25s ease;
@@ -843,21 +843,24 @@ body {
   gap: 3px;
   width: 100%;
   text-align: left;
-  background: none;
-  border: 0;
-  padding: 0;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  padding: 8px 10px;
   cursor: pointer;
-  color: rgba(178, 188, 204, 0.92);
-  transition: color 0.3s ease;
+  color: rgba(178, 188, 204, 0.85);
+  transition: all 0.25s ease;
 }
 
 .timeline-item:hover {
   color: var(--ink);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.16);
 }
 
 .timeline-item:focus-visible {
   outline: 1px solid var(--accent);
-  outline-offset: 6px;
+  outline-offset: 4px;
 }
 
 .timeline-dot {
@@ -870,7 +873,10 @@ body {
 }
 
 .timeline-item.is-active {
-  color: var(--ink);
+  color: #ffffff;
+  background: rgba(255, 107, 53, 0.16);
+  border-color: rgba(255, 107, 53, 0.55);
+  box-shadow: 0 0 16px rgba(255, 107, 53, 0.22);
 }
 
 .timeline-item.is-active .timeline-dot {
@@ -1217,10 +1223,28 @@ body {
   }
 
   .hero {
-    padding: 16vh 22px 0;
+    padding: 10vh 20px 0;
     place-content: start center;
     justify-items: center;
     text-align: center;
+    pointer-events: auto;
+  }
+
+  .hero-title {
+    font-size: clamp(2rem, 7.5vw, 3.2rem);
+    line-height: 0.95;
+  }
+
+  .hero-sub {
+    margin: 14px auto 0;
+    font-size: 0.92rem;
+    line-height: 1.45;
+    max-width: 360px;
+    color: #e2e8f0;
+  }
+
+  .hero-hint {
+    margin: 18px 0 0;
   }
 
   .hero > * {
@@ -1233,6 +1257,18 @@ body {
 }
 
 @media (max-width: 560px) {
+  .timeline {
+    width: calc(100% - 24px);
+    bottom: 16px;
+  }
+
+  .timeline-item {
+    padding: 6px 6px;
+  }
+
+  .timeline-where {
+    display: none;
+  }
   .brand-sub {
     display: none;
   }
