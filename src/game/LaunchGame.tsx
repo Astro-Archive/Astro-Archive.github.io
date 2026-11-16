@@ -1,5 +1,6 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 import { useLang } from '../i18n/lang';
 import { uiFor } from '../i18n/ui';
@@ -20,22 +21,23 @@ import {
 } from './launchAudio';
 import { ShuttleStack } from './ShuttleStack';
 import { CapeCanaveralPad } from './CapeCanaveralPad';
+import { ShuttleGalleryModal } from './ShuttleGalleryModal';
 
 const OTHER_PROJECT_URL = 'https://astroarchive.earth/astro-archive/';
 
-type CameraMode = 'chase' | 'cinematic' | 'cockpit';
+type ViewPreset = 'chase' | 'top' | 'profile' | 'front';
 
 /* ---------------- 3D ENVIRONMENT & ATMOSPHERE ---------------- */
 
 /** Starfield that fades in when ascending past the stratosphere into space */
 function DynamicStarfield({ altitude }: { altitude: number }) {
   const [geo, mat] = useMemo(() => {
-    const count = 2400;
+    const count = 2500;
     const positions = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
       const theta = Math.random() * Math.PI * 2;
       const phi = Math.acos(Math.random() * 2 - 1);
-      const r = 350 + Math.random() * 150;
+      const r = 380 + Math.random() * 150;
       positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
       positions[i * 3 + 1] = Math.abs(r * Math.cos(phi)) + 15;
       positions[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
@@ -53,8 +55,7 @@ function DynamicStarfield({ altitude }: { altitude: number }) {
 
   useFrame(() => {
     if (mat) {
-      // Fade in stars as atmosphere thins (20 km -> 80 km)
-      const starAlpha = Math.min(1, Math.max(0, (altitude - 20) / 60));
+      const starAlpha = Math.min(1, Math.max(0, (altitude - 18) / 60));
       mat.opacity = starAlpha;
     }
   });
@@ -80,7 +81,6 @@ function CloudDeck({ altitude }: { altitude: number }) {
 
   useFrame(() => {
     if (cloudsRef.current) {
-      // Clouds drop down as shuttle climbs
       cloudsRef.current.position.y = -altitude * 10 + 35;
       cloudsRef.current.visible = altitude < 35;
     }
@@ -88,17 +88,16 @@ function CloudDeck({ altitude }: { altitude: number }) {
 
   return (
     <group ref={cloudsRef}>
-      {/* Cloud layer discs around the Florida coast */}
       <mesh position={[-60, 0, 40]} rotation={[-Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[95, 32]} />
+        <circleGeometry args={[110, 32]} />
         <primitive object={cloudMat} attach="material" />
       </mesh>
       <mesh position={[80, 8, -30]} rotation={[-Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[120, 32]} />
+        <circleGeometry args={[130, 32]} />
         <primitive object={cloudMat} attach="material" />
       </mesh>
       <mesh position={[-40, 16, -70]} rotation={[-Math.PI / 2, 0, 0]}>
-        <circleGeometry args={[85, 32]} />
+        <circleGeometry args={[95, 32]} />
         <primitive object={cloudMat} attach="material" />
       </mesh>
     </group>
@@ -124,7 +123,7 @@ function CurvedEarthHorizon({ altitude, pitch }: { altitude: number; pitch: numb
       new THREE.MeshBasicMaterial({
         color: '#38bdf8',
         transparent: true,
-        opacity: 0.5,
+        opacity: 0.52,
         blending: THREE.AdditiveBlending,
         side: THREE.BackSide,
       }),
@@ -133,7 +132,6 @@ function CurvedEarthHorizon({ altitude, pitch }: { altitude: number; pitch: numb
 
   useFrame(() => {
     if (earthMeshRef.current) {
-      // Horizon drops and curves gracefully beneath the shuttle as it ascends into orbit
       const earthCenterY = -480 - altitude * 2.2;
       earthMeshRef.current.position.set(0, earthCenterY, -140);
       earthMeshRef.current.rotation.x = ((90 - pitch) * Math.PI) / 180 * 0.4;
@@ -144,7 +142,6 @@ function CurvedEarthHorizon({ altitude, pitch }: { altitude: number; pitch: numb
     <mesh ref={earthMeshRef} position={[0, -480, -140]}>
       <sphereGeometry args={[420, 64, 64]} />
       <primitive object={earthMat} attach="material" />
-      {/* Cyan Atmospheric Glow Shell */}
       <mesh scale={[1.018, 1.018, 1.018]}>
         <sphereGeometry args={[420, 48, 48]} />
         <primitive object={haloMat} attach="material" />
@@ -153,70 +150,32 @@ function CurvedEarthHorizon({ altitude, pitch }: { altitude: number; pitch: numb
   );
 }
 
-/** Cockpit Interior Canopy (shown in 'cockpit' mode) */
-function CockpitCanopyFrame() {
-  const frameMat = useMemo(
-    () =>
-      new THREE.MeshStandardMaterial({
-        color: '#151922',
-        roughness: 0.8,
-        metalness: 0.7,
-      }),
-    []
-  );
-
-  return (
-    <group position={[0, 0, -1.2]}>
-      {/* Lower Instrument Glare Shield */}
-      <mesh material={frameMat} position={[0, -0.7, 0.2]} rotation={[-0.4, 0, 0]}>
-        <boxGeometry args={[3.4, 0.8, 0.8]} />
-      </mesh>
-      {/* Left Frame Pillar */}
-      <mesh material={frameMat} position={[-1.3, 0.4, 0.1]} rotation={[0, 0.25, -0.45]}>
-        <boxGeometry args={[0.15, 2.2, 0.2]} />
-      </mesh>
-      {/* Right Frame Pillar */}
-      <mesh material={frameMat} position={[1.3, 0.4, 0.1]} rotation={[0, -0.25, 0.45]}>
-        <boxGeometry args={[0.15, 2.2, 0.2]} />
-      </mesh>
-      {/* Overhead Console */}
-      <mesh material={frameMat} position={[0, 1.35, 0.1]}>
-        <boxGeometry args={[2.6, 0.2, 0.3]} />
-      </mesh>
-    </group>
-  );
-}
-
 /* ---------------- MAIN LAUNCH SCENE ---------------- */
 
 interface LaunchSceneProps {
   state: LaunchState;
-  cameraMode: CameraMode;
   srbSeparated: boolean;
   etSeparated: boolean;
   srbOffset: number;
   etOffset: number;
-  orbitAngle: number;
+  orbitControlsRef: React.RefObject<any>;
 }
 
 function LaunchScene({
   state,
-  cameraMode,
   srbSeparated,
   etSeparated,
   srbOffset,
   etOffset,
-  orbitAngle,
+  orbitControlsRef,
 }: LaunchSceneProps) {
-  const camera = useThree((s) => s.camera);
   const { scene } = useThree();
-
   const vaporConeRef = useRef<THREE.Mesh>(null);
 
-  useFrame((_, delta) => {
+  useFrame(() => {
     const alt = state.altitude;
 
-    // 1. Dynamic Atmosphere Sky Dome Lighting & Color
+    // Dynamic Atmosphere Sky Color
     let skyR = 0.22, skyG = 0.74, skyB = 0.97;
     if (alt < 15) {
       const k = alt / 15;
@@ -241,44 +200,7 @@ function LaunchScene({
 
     scene.background = new THREE.Color(skyR, skyG, skyB);
 
-    // 2. Camera Vibration / Rumble
-    const shakeIntensity =
-      state.stage === 'orbit'
-        ? 0.001
-        : Math.min(0.05, 0.003 + state.gForce * 0.007 * state.throttle);
-    const shakeX = (Math.random() - 0.5) * shakeIntensity;
-    const shakeY = (Math.random() - 0.5) * shakeIntensity;
-
-    // 3. Camera Position according to selected Mode
-    const pitchRad = ((90 - state.pitch) * Math.PI) / 180;
-    const rollAngle = state.corridorOffset * -0.12;
-
-    if (cameraMode === 'chase') {
-      // Third-Person Chase Camera: positioned behind and below the Space Shuttle
-      const baseDist = 44 + (state.velocity / 28000) * 12;
-      const camY = -14 + Math.sin(pitchRad) * 6;
-      const camZ = baseDist * Math.cos(pitchRad * 0.4);
-
-      camera.position.set(
-        state.corridorOffset * -4 + shakeX,
-        camY + shakeY,
-        camZ
-      );
-      camera.lookAt(0, 10, -5);
-    } else if (cameraMode === 'cinematic') {
-      // Cinematic Orbit Camera: slowly sweeps around the shuttle stack to appreciate Earth curvature
-      const radius = 55;
-      const camX = Math.cos(orbitAngle) * radius;
-      const camZ = Math.sin(orbitAngle) * radius;
-      camera.position.set(camX + shakeX, -4 + shakeY, camZ);
-      camera.lookAt(0, 8, 0);
-    } else {
-      // First-Person Cockpit Camera
-      camera.position.set(shakeX, 6 + shakeY, 8.5);
-      camera.rotation.set(pitchRad * 0.4, 0, rollAngle);
-    }
-
-    // 4. Transonic Mach Shock Vapor Cone (10-18 km)
+    // Transonic Mach Shock Vapor Cone
     if (vaporConeRef.current) {
       const inVaporRange = alt >= 10 && alt <= 18;
       vaporConeRef.current.visible = inVaporRange;
@@ -296,6 +218,18 @@ function LaunchScene({
     <>
       <ambientLight intensity={state.altitude > 80 ? 0.35 : 0.85} />
       <directionalLight position={[25, 45, 30]} intensity={state.altitude > 80 ? 3.8 : 2.0} color="#fffef4" />
+
+      {/* Free 360-degree Orbit Controls (enables top view, bottom view, side view, and zoom) */}
+      <OrbitControls
+        ref={orbitControlsRef}
+        makeDefault
+        enableDamping
+        dampingFactor={0.08}
+        target={[0, 6, 0]}
+        minDistance={15}
+        maxDistance={280}
+        maxPolarAngle={Math.PI}
+      />
 
       {/* SPACE SHUTTLE STACK IN 3D */}
       <group rotation={[pitchRad, 0, rollRad]}>
@@ -322,12 +256,9 @@ function LaunchScene({
             depthWrite={false}
           />
         </mesh>
-
-        {/* Cockpit Canopy (only in cockpit mode) */}
-        {cameraMode === 'cockpit' && <CockpitCanopyFrame />}
       </group>
 
-      {/* CAPE CANAVERAL PAD LC-39B & FLORIDA TERRAIN */}
+      {/* CAPE CANAVERAL PAD LC-39B & AERIAL SATELLITE TERRAIN */}
       <Suspense fallback={null}>
         <CapeCanaveralPad altitude={state.altitude} />
       </Suspense>
@@ -355,12 +286,14 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
   const { lang } = useLang();
   const t = uiFor(lang);
   const rootRef = useRef<HTMLDivElement>(null);
+  const orbitControlsRef = useRef<any>(null);
 
   const [state, setState] = useState<LaunchState>(createInitialLaunchState);
   const [countdown, setCountdown] = useState<number | null>(3);
   const [started, setStarted] = useState(false);
   const [muted, setMuted] = useState(false);
-  const [cameraMode, setCameraMode] = useState<CameraMode>('chase'); // Third person default!
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const [timeWarp, setTimeWarp] = useState<number>(1.0);
   const [autoRedirectSec, setAutoRedirectSec] = useState<number | null>(null);
 
   // Separation animation progress
@@ -370,8 +303,6 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
   const etOffsetRef = useRef(0);
   const [srbOffset, setSrbOffset] = useState(0);
   const [etOffset, setEtOffset] = useState(0);
-
-  const [orbitAngle, setOrbitAngle] = useState(0.4);
 
   const stateRef = useRef(state);
   stateRef.current = state;
@@ -388,6 +319,36 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
   useEffect(() => {
     rootRef.current?.focus();
   }, []);
+
+  // Update time warp on stateRef
+  const changeTimeWarp = (warp: number) => {
+    setTimeWarp(warp);
+    stateRef.current.timeWarp = warp;
+  };
+
+  // Camera presets
+  const applyViewPreset = (preset: ViewPreset) => {
+    const controls = orbitControlsRef.current;
+    if (!controls) return;
+    if (preset === 'top') {
+      // Direct Top-Down View
+      controls.object.position.set(0, 68, 0.1);
+      controls.target.set(0, 6, 0);
+    } else if (preset === 'chase') {
+      // Classic Chase Cam
+      controls.object.position.set(0, -14, 48);
+      controls.target.set(0, 10, -5);
+    } else if (preset === 'profile') {
+      // Side Profile View
+      controls.object.position.set(52, 4, 12);
+      controls.target.set(0, 6, 0);
+    } else if (preset === 'front') {
+      // Front View
+      controls.object.position.set(0, 8, -50);
+      controls.target.set(0, 6, 0);
+    }
+    controls.update();
+  };
 
   // Countdown T-3, 2, 1, LIFTOFF
   useEffect(() => {
@@ -431,21 +392,18 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
 
       // Animate SRB separation drift
       if (srbSeparated && srbOffsetRef.current < 1.0) {
-        srbOffsetRef.current = Math.min(1.0, srbOffsetRef.current + dt * 0.4);
+        srbOffsetRef.current = Math.min(1.0, srbOffsetRef.current + dt * 0.4 * (stateRef.current.timeWarp || 1));
         setSrbOffset(srbOffsetRef.current);
       }
 
       // Animate External Tank separation drift
       if (etSeparated && etOffsetRef.current < 1.0) {
-        etOffsetRef.current = Math.min(1.0, etOffsetRef.current + dt * 0.3);
+        etOffsetRef.current = Math.min(1.0, etOffsetRef.current + dt * 0.3 * (stateRef.current.timeWarp || 1));
         setEtOffset(etOffsetRef.current);
       }
 
-      // Slow cinematic camera orbit rotation
-      setOrbitAngle((a) => a + dt * 0.15);
-
       hudClock += dt;
-      if (hudClock > 0.06) {
+      if (hudClock > 0.05) {
         hudClock = 0;
         const cur = stateRef.current;
         setState({ ...cur });
@@ -464,31 +422,27 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
     };
   }, [started, muted, srbSeparated, etSeparated]);
 
-  // Detect Staging and Sound Milestones
+  // Detect Milestones
   const prevAlt = useRef(0);
   const prevStage = useRef<1 | 2 | 'orbit'>(1);
 
   useEffect(() => {
     if (!started) return;
 
-    // Transonic sonic boom
     if (prevAlt.current < 11 && state.altitude >= 11) {
       playSonicBoom();
     }
 
-    // SRB Separation at Stage 1 burnout
     if (prevStage.current === 1 && state.stage === 2 && !srbSeparated) {
       setSrbSeparated(true);
       playStageSeparationSound();
     }
 
-    // External Tank separation when nearing orbit (altitude > 115 km)
     if (state.altitude >= 115 && !etSeparated) {
       setEtSeparated(true);
       playStageSeparationSound();
     }
 
-    // Orbital insertion triumph chord
     if (prevStage.current !== 'orbit' && state.stage === 'orbit') {
       playOrbitalInsertionChime();
       setAutoRedirectSec(5);
@@ -522,10 +476,18 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
   // Keyboard navigation
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-      if (e.key === 'v' || e.key === 'V') {
-        setCameraMode((c) => (c === 'chase' ? 'cinematic' : c === 'cinematic' ? 'cockpit' : 'chase'));
+      if (e.key === 'Escape') {
+        if (galleryOpen) setGalleryOpen(false);
+        else onClose();
       }
+      if (e.key === '1') changeTimeWarp(0.5);
+      if (e.key === '2') changeTimeWarp(1.0);
+      if (e.key === '3') changeTimeWarp(2.0);
+      if (e.key === '4') changeTimeWarp(4.0);
+      if (e.key === 't' || e.key === 'T') applyViewPreset('top');
+      if (e.key === 'c' || e.key === 'C') applyViewPreset('chase');
+      if (e.key === 'p' || e.key === 'P') applyViewPreset('profile');
+
       if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') inputRef.current.steerLeft = true;
       if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') inputRef.current.steerRight = true;
       if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') inputRef.current.throttleUp = true;
@@ -556,9 +518,9 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
     };
-  }, [onClose]);
+  }, [onClose, galleryOpen]);
 
-  // Touch / pointer steer helpers
+  // Touch steer helpers
   const handleSteer = (dir: 'left' | 'right', pressed: boolean) => {
     if (dir === 'left') inputRef.current.steerLeft = pressed;
     if (dir === 'right') inputRef.current.steerRight = pressed;
@@ -575,25 +537,24 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
     }, 200);
   };
 
-  // Translations & Layer Identification
   const isEs = lang === 'es';
-  const siteLabel = isEs ? 'CABO CAÑAVERAL, FL · PLATAFORMA 39B' : 'CAPE CANAVERAL, FL · PAD 39B';
+  const siteLabel = isEs ? 'CABO CAÑAVERAL, FL // PLATAFORMA 39B' : 'CAPE CANAVERAL, FL // PAD 39B';
   const titleText = isEs ? 'TRANSBORDADOR ESPACIAL ATLANTIS' : 'SPACE SHUTTLE ATLANTIS';
 
-  // Get current atmospheric layer info
+  // Current atmospheric layer info
   const alt = state.altitude;
   let layerBadge = isEs ? 'TROPOSFERA · 0 - 12 KM' : 'TROPOSPHERE · 0 - 12 KM';
   let layerDesc = isEs ? 'Atmósfera densa · Costa de Florida' : 'Dense Atmosphere · Florida Coast';
 
   if (alt >= 12 && alt < 50) {
     layerBadge = isEs ? 'ESTRATOSFERA · 12 - 50 KM (MAX-Q)' : 'STRATOSPHERE · 12 - 50 KM (MAX-Q)';
-    layerDesc = isEs ? 'Transónico · Mach ' + state.mach.toFixed(1) : 'Transonic · Mach ' + state.mach.toFixed(1);
+    layerDesc = isEs ? `Transónico · Mach ${state.mach.toFixed(1)} · Presión Q: ${state.dynamicPressure.toFixed(1)} kPa` : `Transonic · Mach ${state.mach.toFixed(1)} · Dynamic Q: ${state.dynamicPressure.toFixed(1)} kPa`;
   } else if (alt >= 50 && alt < 85) {
     layerBadge = isEs ? 'MESOSFERA · 50 - 85 KM' : 'MESOSPHERE · 50 - 85 KM';
     layerDesc = isEs ? 'Separación de Propulsores Sólidos (SRB)' : 'Solid Rocket Booster (SRB) Separation';
   } else if (alt >= 85 && alt < 120) {
     layerBadge = isEs ? 'TERMOSFERA · LÍNEA DE KÁRMÁN (100 KM)' : 'THERMOSPHERE · KÁRMÁN LINE (100 KM)';
-    layerDesc = isEs ? 'Frontera del Espacio Exterior' : 'Boundary of Outer Space';
+    layerDesc = isEs ? 'Frontera del Espacio Exterior · Separación ET' : 'Boundary of Space · External Tank Separation';
   } else if (alt >= 120) {
     layerBadge = isEs ? 'EXOSFERA · ÓRBITA BAJA (LEO)' : 'EXOSPHERE · LOW EARTH ORBIT (LEO)';
     layerDesc = isEs ? 'Microgravedad (0.0 G) · Inserción Orbital' : 'Microgravity (0.0 G) · Orbital Insertion';
@@ -606,23 +567,22 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
       aria-modal="true"
       tabIndex={-1}
       ref={rootRef}
-      style={{ position: 'fixed', inset: 0, zIndex: 100, background: '#020617' }}
+      style={{ position: 'fixed', inset: 0, zIndex: 100, background: '#020617', userSelect: 'none' }}
     >
-      {/* 3D Viewport */}
+      {/* 3D Viewport with OrbitControls */}
       <div className="game-stage" style={{ position: 'absolute', inset: 0 }}>
         <Canvas
           dpr={[1, 1.75]}
-          camera={{ fov: 60, near: 0.1, far: 1200, position: [0, -14, 48] }}
+          camera={{ fov: 58, near: 0.1, far: 1400, position: [0, -14, 48] }}
           gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
         >
           <LaunchScene
             state={state}
-            cameraMode={cameraMode}
             srbSeparated={srbSeparated}
             etSeparated={etSeparated}
             srbOffset={srbOffset}
             etOffset={etOffset}
-            orbitAngle={orbitAngle}
+            orbitControlsRef={orbitControlsRef}
           />
         </Canvas>
       </div>
@@ -637,57 +597,165 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
           justifyContent: 'space-between',
           alignItems: 'center',
           padding: '16px 24px',
-          background: 'linear-gradient(180deg, rgba(2,6,23,0.85) 0%, rgba(2,6,23,0) 100%)',
+          background: 'linear-gradient(180deg, rgba(2,6,23,0.92) 0%, rgba(2,6,23,0) 100%)',
         }}
       >
         <div>
           <p style={{ margin: 0, fontFamily: 'monospace', fontSize: '11px', letterSpacing: '0.15em', color: '#38bdf8' }}>
             {siteLabel}
           </p>
-          <h2 style={{ margin: '4px 0 0', fontSize: '1.25rem', fontWeight: 700, color: '#f8fafc', letterSpacing: '0.04em' }}>
+          <h2 style={{ margin: '4px 0 0', fontSize: '1.25rem', fontWeight: 800, color: '#f8fafc', letterSpacing: '0.04em' }}>
             {titleText}
           </h2>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          {/* Camera View Switcher */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          {/* Historical Fleet Gallery Button */}
           <button
             type="button"
-            className="ghost-button"
-            onClick={() => {
-              setCameraMode((c) => (c === 'chase' ? 'cinematic' : c === 'cinematic' ? 'cockpit' : 'chase'));
-            }}
+            onClick={() => setGalleryOpen(true)}
             style={{
               padding: '6px 14px',
-              fontSize: '12px',
-              borderColor: '#38bdf8',
+              fontSize: '11px',
+              fontWeight: 800,
+              fontFamily: 'monospace',
+              letterSpacing: '0.08em',
+              background: 'rgba(2, 132, 199, 0.25)',
+              border: '1px solid #0284c7',
+              borderRadius: '6px',
               color: '#38bdf8',
-              background: 'rgba(56,189,248,0.12)',
+              cursor: 'pointer',
+              boxShadow: '0 0 10px rgba(56, 189, 248, 0.2)',
             }}
           >
-            🎥 {cameraMode === 'chase' ? (isEs ? '3ª Persona [V]' : 'Chase Cam [V]') : cameraMode === 'cinematic' ? (isEs ? 'Cinemática [V]' : 'Cinematic [V]') : (isEs ? 'Cabina [V]' : 'Cockpit [V]')}
+            [ {isEs ? 'FLOTA HISTÓRICA' : 'SHUTTLE ARCHIVE'} ]
           </button>
+
+          {/* Camera View Preset Buttons */}
+          <button
+            type="button"
+            onClick={() => applyViewPreset('top')}
+            style={{
+              padding: '6px 10px',
+              fontSize: '11px',
+              fontFamily: 'monospace',
+              fontWeight: 700,
+              background: 'rgba(15, 23, 42, 0.8)',
+              border: '1px solid #334155',
+              borderRadius: '6px',
+              color: '#f8fafc',
+              cursor: 'pointer',
+            }}
+            title="Vista Superior [T]"
+          >
+            TOP
+          </button>
+          <button
+            type="button"
+            onClick={() => applyViewPreset('chase')}
+            style={{
+              padding: '6px 10px',
+              fontSize: '11px',
+              fontFamily: 'monospace',
+              fontWeight: 700,
+              background: 'rgba(15, 23, 42, 0.8)',
+              border: '1px solid #334155',
+              borderRadius: '6px',
+              color: '#f8fafc',
+              cursor: 'pointer',
+            }}
+            title="Cámara Trasera [C]"
+          >
+            CHASE
+          </button>
+          <button
+            type="button"
+            onClick={() => applyViewPreset('profile')}
+            style={{
+              padding: '6px 10px',
+              fontSize: '11px',
+              fontFamily: 'monospace',
+              fontWeight: 700,
+              background: 'rgba(15, 23, 42, 0.8)',
+              border: '1px solid #334155',
+              borderRadius: '6px',
+              color: '#f8fafc',
+              cursor: 'pointer',
+            }}
+            title="Perfil Lateral [P]"
+          >
+            SIDE
+          </button>
+
+          {/* Time Warp Speed Controls */}
+          <div
+            style={{
+              display: 'flex',
+              background: 'rgba(15, 23, 42, 0.85)',
+              border: '1px solid #334155',
+              borderRadius: '6px',
+              overflow: 'hidden',
+            }}
+          >
+            {[0.5, 1.0, 2.0, 4.0].map((w) => (
+              <button
+                key={w}
+                type="button"
+                onClick={() => changeTimeWarp(w)}
+                style={{
+                  padding: '5px 8px',
+                  fontSize: '10px',
+                  fontFamily: 'monospace',
+                  fontWeight: timeWarp === w ? 800 : 500,
+                  background: timeWarp === w ? '#0284c7' : 'transparent',
+                  color: timeWarp === w ? '#ffffff' : '#94a3b8',
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                {w}X
+              </button>
+            ))}
+          </div>
 
           {/* Audio toggle */}
           <button
             type="button"
-            className="ghost-button"
             onClick={() => {
               setMuted(!muted);
               if (!muted) stopRocketEngine();
               else if (started) startRocketEngine();
             }}
-            style={{ padding: '6px 12px', fontSize: '12px' }}
+            style={{
+              padding: '6px 12px',
+              fontSize: '11px',
+              fontFamily: 'monospace',
+              fontWeight: 700,
+              background: 'rgba(15, 23, 42, 0.8)',
+              border: '1px solid #334155',
+              borderRadius: '6px',
+              color: muted ? '#94a3b8' : '#38bdf8',
+              cursor: 'pointer',
+            }}
           >
-            {muted ? '🔇 MUTE' : '🔊 AUDIO'}
+            {muted ? 'AUDIO OFF' : 'AUDIO ON'}
           </button>
 
           {/* Exit / Back to Museum */}
           <button
             type="button"
-            className="ghost-button"
             onClick={onClose}
-            style={{ padding: '6px 14px', fontSize: '12px', borderColor: '#475569' }}
+            style={{
+              padding: '6px 14px',
+              fontSize: '11px',
+              fontFamily: 'monospace',
+              fontWeight: 700,
+              background: 'transparent',
+              border: '1px solid #475569',
+              borderRadius: '6px',
+              color: '#f8fafc',
+              cursor: 'pointer',
+            }}
           >
             {t.backToMuseum}
           </button>
@@ -706,18 +774,18 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            padding: '8px 18px',
-            background: 'rgba(15, 23, 42, 0.85)',
-            border: '1px solid rgba(56, 189, 248, 0.4)',
+            padding: '8px 20px',
+            background: 'rgba(15, 23, 42, 0.88)',
+            border: '1px solid rgba(56, 189, 248, 0.45)',
             borderRadius: '24px',
-            backdropFilter: 'blur(8px)',
+            backdropFilter: 'blur(10px)',
             pointerEvents: 'none',
           }}
         >
           <span style={{ fontSize: '12px', fontWeight: 800, fontFamily: 'monospace', color: '#38bdf8', letterSpacing: '0.12em' }}>
-            🌍 {layerBadge}
+            {layerBadge}
           </span>
-          <span style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px' }}>
+          <span style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px', fontFamily: 'monospace' }}>
             {layerDesc}
           </span>
         </div>
@@ -738,8 +806,8 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
             background: 'radial-gradient(circle, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.85) 100%)',
           }}
         >
-          <div style={{ fontFamily: 'monospace', fontSize: '14px', letterSpacing: '0.3em', color: '#38bdf8', marginBottom: '8px' }}>
-            {isEs ? 'SECUENCIA DE IGNICIÓN · CABO CAÑAVERAL' : 'IGNITION SEQUENCE · CAPE CANAVERAL'}
+          <div style={{ fontFamily: 'monospace', fontSize: '13px', letterSpacing: '0.3em', color: '#38bdf8', marginBottom: '8px' }}>
+            // STS-135 LAUNCH SEQUENCE · PAD 39B //
           </div>
           <div
             style={{
@@ -752,83 +820,115 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
           >
             {countdown === 0 ? 'LIFTOFF!' : `T-${countdown}`}
           </div>
-          <div style={{ marginTop: '12px', fontSize: '14px', color: '#94a3b8' }}>
-            {isEs ? 'Space Shuttle Atlantis · Pad 39B' : 'Space Shuttle Atlantis · Pad 39B'}
+          <div style={{ marginTop: '12px', fontSize: '13px', color: '#94a3b8', fontFamily: 'monospace' }}>
+            Kennedy Space Center · Cape Canaveral, FL
           </div>
         </div>
       )}
 
-      {/* Tactical Telemetry HUD */}
+      {/* Comprehensive Aerospace Telemetry Panel (Left) */}
       {started && !state.orbitalInsertion && (
         <div
           style={{
             position: 'absolute',
             top: '80px',
-            left: '24px',
+            left: '20px',
             zIndex: 10,
-            padding: '16px 20px',
-            background: 'rgba(15, 23, 42, 0.8)',
-            border: '1px solid rgba(56, 189, 248, 0.3)',
+            padding: '14px 18px',
+            background: 'rgba(11, 17, 32, 0.85)',
+            border: '1px solid rgba(56, 189, 248, 0.35)',
             borderRadius: '10px',
             backdropFilter: 'blur(10px)',
             fontFamily: 'monospace',
             color: '#e2e8f0',
-            minWidth: '220px',
+            width: '240px',
             pointerEvents: 'none',
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '6px' }}>
-            <span style={{ fontSize: '11px', color: '#38bdf8' }}>
+          {/* Header & Status */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '6px' }}>
+            <span style={{ fontSize: '11px', color: '#38bdf8', fontWeight: 'bold' }}>
               T+{(state.missionTime).toFixed(1)}s
             </span>
-            <span style={{ fontSize: '11px', color: srbSeparated ? '#38bdf8' : '#10b981', fontWeight: 'bold' }}>
+            <span style={{ fontSize: '10px', color: srbSeparated ? '#38bdf8' : '#10b981', fontWeight: 'bold' }}>
               {srbSeparated ? 'ET + SSME' : 'SRB BOOST'}
             </span>
           </div>
 
-          <div style={{ marginBottom: '8px' }}>
-            <div style={{ fontSize: '10px', color: '#94a3b8' }}>ALTITUDE</div>
-            <div style={{ fontSize: '1.4rem', fontWeight: 'bold', color: '#ffffff' }}>
-              {state.altitude.toFixed(2)} <span style={{ fontSize: '12px', color: '#38bdf8' }}>km</span>
+          {/* Altitude & Speed */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
+            <div>
+              <div style={{ fontSize: '9px', color: '#64748b' }}>ALTITUDE</div>
+              <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ffffff' }}>
+                {state.altitude.toFixed(1)} <span style={{ fontSize: '10px', color: '#38bdf8' }}>km</span>
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: '9px', color: '#64748b' }}>SPEED</div>
+              <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#ffffff' }}>
+                {Math.round(state.velocity).toLocaleString()} <span style={{ fontSize: '9px', color: '#64748b' }}>km/h</span>
+              </div>
+              <div style={{ fontSize: '10px', color: state.mach > 1 ? '#38bdf8' : '#64748b' }}>
+                Mach {state.mach.toFixed(2)}
+              </div>
             </div>
           </div>
 
-          <div style={{ marginBottom: '8px' }}>
-            <div style={{ fontSize: '10px', color: '#94a3b8' }}>SPEED</div>
-            <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: '#ffffff' }}>
-              {Math.round(state.velocity).toLocaleString()} <span style={{ fontSize: '11px', color: '#94a3b8' }}>km/h</span>
+          {/* Downrange & Apogee */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
+            <div>
+              <div style={{ fontSize: '9px', color: '#64748b' }}>DOWNRANGE</div>
+              <div style={{ fontSize: '12px', fontWeight: 700, color: '#e2e8f0' }}>
+                {state.downrangeDistance.toFixed(1)} km
+              </div>
             </div>
-            <div style={{ fontSize: '11px', color: state.mach > 1 ? '#38bdf8' : '#64748b' }}>
-              Mach {state.mach.toFixed(2)}
-            </div>
-          </div>
-
-          <div style={{ marginBottom: '10px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#94a3b8' }}>
-              <span>G-FORCE</span>
-              <span style={{ color: state.gForce > 3.0 ? '#ef4444' : '#10b981', fontWeight: 'bold' }}>
-                {state.gForce.toFixed(2)} G
-              </span>
-            </div>
-            <div style={{ height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', overflow: 'hidden', marginTop: '3px' }}>
-              <div
-                style={{
-                  height: '100%',
-                  width: `${Math.min(100, (state.gForce / 4.2) * 100)}%`,
-                  background: state.gForce > 3.0 ? '#ef4444' : '#38bdf8',
-                  transition: 'width 0.1s linear',
-                }}
-              />
+            <div>
+              <div style={{ fontSize: '9px', color: '#64748b' }}>EST. APOGEE</div>
+              <div style={{ fontSize: '12px', fontWeight: 700, color: '#10b981' }}>
+                {state.projectedApogee.toFixed(0)} km
+              </div>
             </div>
           </div>
 
-          {/* SRB & Tank Gauges */}
+          {/* Dynamic Pressure Q & G-Force */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
+            <div>
+              <div style={{ fontSize: '9px', color: '#64748b' }}>DYNAMIC Q</div>
+              <div style={{ fontSize: '12px', fontWeight: 700, color: state.dynamicPressure > 28 ? '#f59e0b' : '#38bdf8' }}>
+                {state.dynamicPressure.toFixed(1)} kPa
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: '9px', color: '#64748b' }}>G-FORCE</div>
+              <div style={{ fontSize: '12px', fontWeight: 700, color: state.gForce > 3.0 ? '#ef4444' : '#10b981' }}>
+                {state.gForce.toFixed(2)} G ({state.acceleration.toFixed(1)} m/s²)
+              </div>
+            </div>
+          </div>
+
+          {/* Chamber Pressure Pc & Propellant Mass */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '10px' }}>
+            <div>
+              <div style={{ fontSize: '9px', color: '#64748b' }}>SSME Pc</div>
+              <div style={{ fontSize: '12px', fontWeight: 700, color: '#e2e8f0' }}>
+                {state.chamberPressure.toFixed(0)}% RPL
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: '9px', color: '#64748b' }}>PROP. MASS</div>
+              <div style={{ fontSize: '12px', fontWeight: 700, color: '#e2e8f0' }}>
+                {Math.round(state.propellantMass)} t
+              </div>
+            </div>
+          </div>
+
+          {/* Fuel Gauges */}
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#94a3b8', marginBottom: '2px' }}>
-              <span>{srbSeparated ? 'EXTERNAL TANK' : 'SOLID BOOSTERS (SRB)'}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: '#94a3b8', marginBottom: '3px' }}>
+              <span>{srbSeparated ? 'EXTERNAL TANK (LH2/LOX)' : 'SOLID ROCKET BOOSTERS (SRB)'}</span>
               <span>{Math.round((srbSeparated ? state.stage2Fuel : state.stage1Fuel) * 100)}%</span>
             </div>
-            <div style={{ height: '5px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden' }}>
+            <div style={{ height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', overflow: 'hidden' }}>
               <div
                 style={{
                   height: '100%',
@@ -839,6 +939,33 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
               />
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Free View Hint (Top Right) */}
+      {started && !state.orbitalInsertion && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '80px',
+            right: '20px',
+            zIndex: 10,
+            padding: '8px 14px',
+            background: 'rgba(11, 17, 32, 0.75)',
+            border: '1px solid rgba(56, 189, 248, 0.25)',
+            borderRadius: '8px',
+            fontFamily: 'monospace',
+            fontSize: '10px',
+            color: '#94a3b8',
+            pointerEvents: 'none',
+            textAlign: 'right',
+          }}
+        >
+          <div style={{ color: '#38bdf8', fontWeight: 700, marginBottom: '2px' }}>
+            {isEs ? '// VISTA LIBRE 360° ACTIVA //' : '// 360° FREE ORBIT ACTIVE //'}
+          </div>
+          <div>{isEs ? 'Arrastra para rotar · Rueda para zoom' : 'Click & drag to rotate · Scroll to zoom'}</div>
+          <div>{isEs ? 'Presiona [T] para Vista Superior' : 'Press [T] for Top View'}</div>
         </div>
       )}
 
@@ -860,11 +987,11 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
           <div
             style={{
               width: '260px',
-              height: '28px',
+              height: '26px',
               border: '1px solid rgba(56, 189, 248, 0.4)',
               borderRadius: '6px',
               position: 'relative',
-              background: 'rgba(2, 6, 23, 0.5)',
+              background: 'rgba(2, 6, 23, 0.55)',
               backdropFilter: 'blur(4px)',
             }}
           >
@@ -895,7 +1022,7 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
               }}
             />
           </div>
-          <div style={{ marginTop: '6px', fontSize: '10px', fontFamily: 'monospace', color: '#94a3b8', letterSpacing: '0.1em' }}>
+          <div style={{ marginTop: '5px', fontSize: '9px', fontFamily: 'monospace', color: '#94a3b8', letterSpacing: '0.1em' }}>
             {isEs ? 'CORREDOR DE TRAYECTORIA [A / D]' : 'TRAJECTORY CORRIDOR [A / D]'}
           </div>
         </div>
@@ -919,21 +1046,20 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
             type="button"
             onClick={triggerSeparation}
             style={{
-              padding: '16px 36px',
-              fontSize: '1.1rem',
+              padding: '14px 34px',
+              fontSize: '1.05rem',
               fontWeight: 800,
               fontFamily: 'monospace',
               letterSpacing: '0.12em',
               color: '#ffffff',
               background: 'linear-gradient(135deg, #f97316 0%, #dc2626 100%)',
               border: '2px solid #fca5a5',
-              borderRadius: '10px',
+              borderRadius: '8px',
               cursor: 'pointer',
               boxShadow: '0 0 25px rgba(239, 68, 68, 0.7)',
-              animation: 'pulse 1s infinite alternate',
             }}
           >
-            {isEs ? '⚡ SEPARAR PROPULSORES SRB [ESPACIO]' : '⚡ SEPARATE SRB BOOSTERS [SPACE]'}
+            [ {isEs ? 'SEPARAR PROPULSORES SRB (ESPACIO)' : 'SEPARATE SRB BOOSTERS (SPACE)'} ]
           </button>
         </div>
       )}
@@ -956,7 +1082,7 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
             padding: '24px',
           }}
         >
-          <div style={{ fontSize: '12px', fontFamily: 'monospace', letterSpacing: '0.3em', color: '#10b981', marginBottom: '8px' }}>
+          <div style={{ fontSize: '11px', fontFamily: 'monospace', letterSpacing: '0.3em', color: '#10b981', marginBottom: '8px' }}>
             // LOW EARTH ORBIT (LEO) INSERTION CONFIRMED //
           </div>
           <h1
@@ -968,11 +1094,12 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
               background: 'linear-gradient(135deg, #38bdf8 0%, #10b981 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
+              fontFamily: 'monospace',
             }}
           >
             {isEs ? '¡HAS ALCANZADO EL ESPACIO!' : 'ORBIT INSERTION ACHIEVED!'}
           </h1>
-          <p style={{ maxWidth: '560px', fontSize: '15px', color: '#cbd5e1', lineHeight: '1.6', margin: '0 0 24px' }}>
+          <p style={{ maxWidth: '560px', fontSize: '14px', color: '#cbd5e1', lineHeight: '1.6', margin: '0 0 24px', fontFamily: 'monospace' }}>
             {isEs
               ? 'El Transbordador Espacial Atlantis ha superado todas las capas atmosféricas desde Cabo Cañaveral y alcanzado una velocidad orbital de 28,140 km/h en microgravedad.'
               : 'Space Shuttle Atlantis has traversed all atmospheric layers from Cape Canaveral and achieved a stable orbital speed of 28,140 km/h in microgravity.'}
@@ -989,15 +1116,15 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
               fontFamily: 'monospace',
             }}
           >
-            <div style={{ padding: '12px', background: 'rgba(15,23,42,0.8)', borderRadius: '8px', border: '1px solid rgba(56,189,248,0.2)' }}>
+            <div style={{ padding: '12px', background: 'rgba(15,23,42,0.85)', borderRadius: '8px', border: '1px solid rgba(56,189,248,0.2)' }}>
               <div style={{ fontSize: '10px', color: '#94a3b8' }}>ALTITUDE</div>
               <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#38bdf8' }}>135.2 km</div>
             </div>
-            <div style={{ padding: '12px', background: 'rgba(15,23,42,0.8)', borderRadius: '8px', border: '1px solid rgba(56,189,248,0.2)' }}>
+            <div style={{ padding: '12px', background: 'rgba(15,23,42,0.85)', borderRadius: '8px', border: '1px solid rgba(56,189,248,0.2)' }}>
               <div style={{ fontSize: '10px', color: '#94a3b8' }}>VELOCITY</div>
               <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#10b981' }}>28,140 km/h</div>
             </div>
-            <div style={{ padding: '12px', background: 'rgba(15,23,42,0.8)', borderRadius: '8px', border: '1px solid rgba(56,189,248,0.2)' }}>
+            <div style={{ padding: '12px', background: 'rgba(15,23,42,0.85)', borderRadius: '8px', border: '1px solid rgba(56,189,248,0.2)' }}>
               <div style={{ fontSize: '10px', color: '#94a3b8' }}>G-FORCE</div>
               <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#e2e8f0' }}>0.00 G</div>
             </div>
@@ -1008,29 +1135,26 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
             onClick={redirectToSimulator}
             style={{
               padding: '16px 36px',
-              fontSize: '1.15rem',
+              fontSize: '1.1rem',
               fontWeight: 800,
               fontFamily: 'monospace',
               letterSpacing: '0.08em',
               color: '#020617',
               background: 'linear-gradient(135deg, #38bdf8 0%, #10b981 100%)',
               border: 'none',
-              borderRadius: '10px',
+              borderRadius: '8px',
               cursor: 'pointer',
               boxShadow: '0 0 30px rgba(56, 189, 248, 0.6)',
-              transition: 'transform 0.15s ease',
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
-            onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
           >
-            {isEs
-              ? `🚀 ENTRAR AL SIMULADOR ESPACIAL 3D (${autoRedirectSec ?? 5}s)`
-              : `🚀 ENTER 3D SPACE SIMULATOR (${autoRedirectSec ?? 5}s)`}
+            [ {isEs
+              ? `ENTRAR AL SIMULADOR ESPACIAL 3D (${autoRedirectSec ?? 5}s)`
+              : `ENTER 3D SPACE SIMULATOR (${autoRedirectSec ?? 5}s)`} ]
           </button>
         </div>
       )}
 
-      {/* Mobile Touch Flight Controls */}
+      {/* Flight Controls (Bottom) */}
       {started && !state.orbitalInsertion && (
         <div
           style={{
@@ -1046,8 +1170,8 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
             pointerEvents: 'auto',
           }}
         >
-          {/* Steering arrows */}
-          <div style={{ display: 'flex', gap: '10px' }}>
+          {/* Tactical Steering Pads */}
+          <div style={{ display: 'flex', gap: '8px' }}>
             <button
               type="button"
               className="ctrl"
@@ -1055,17 +1179,19 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
               onPointerUp={() => handleSteer('left', false)}
               onPointerLeave={() => handleSteer('left', false)}
               style={{
-                width: '56px',
-                height: '56px',
-                fontSize: '22px',
-                borderRadius: '12px',
-                background: 'rgba(15,23,42,0.85)',
+                width: '54px',
+                height: '54px',
+                fontSize: '18px',
+                fontFamily: 'monospace',
+                fontWeight: 800,
+                borderRadius: '8px',
+                background: 'rgba(15,23,42,0.9)',
                 border: '1px solid rgba(56,189,248,0.4)',
-                color: '#ffffff',
+                color: '#38bdf8',
                 cursor: 'pointer',
               }}
             >
-              ←
+              &lt;
             </button>
             <button
               type="button"
@@ -1074,17 +1200,19 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
               onPointerUp={() => handleSteer('right', false)}
               onPointerLeave={() => handleSteer('right', false)}
               style={{
-                width: '56px',
-                height: '56px',
-                fontSize: '22px',
-                borderRadius: '12px',
-                background: 'rgba(15,23,42,0.85)',
+                width: '54px',
+                height: '54px',
+                fontSize: '18px',
+                fontFamily: 'monospace',
+                fontWeight: 800,
+                borderRadius: '8px',
+                background: 'rgba(15,23,42,0.9)',
                 border: '1px solid rgba(56,189,248,0.4)',
-                color: '#ffffff',
+                color: '#38bdf8',
                 cursor: 'pointer',
               }}
             >
-              →
+              &gt;
             </button>
           </div>
 
@@ -1096,11 +1224,11 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
               color: '#38bdf8',
               letterSpacing: '0.1em',
               textAlign: 'center',
-              maxWidth: '380px',
-              padding: '6px 14px',
-              background: 'rgba(2,6,23,0.7)',
+              maxWidth: '420px',
+              padding: '6px 16px',
+              background: 'rgba(2,6,23,0.8)',
               borderRadius: '20px',
-              border: '1px solid rgba(56,189,248,0.2)',
+              border: '1px solid rgba(56,189,248,0.25)',
             }}
           >
             {state.statusText}
@@ -1115,12 +1243,13 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
               onPointerUp={() => handleThrottle(false)}
               onPointerLeave={() => handleThrottle(false)}
               style={{
-                padding: '0 24px',
-                height: '56px',
-                fontSize: '14px',
+                padding: '0 26px',
+                height: '54px',
+                fontSize: '13px',
                 fontWeight: 800,
                 fontFamily: 'monospace',
-                borderRadius: '12px',
+                letterSpacing: '0.08em',
+                borderRadius: '8px',
                 background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
                 border: '1px solid #38bdf8',
                 color: '#ffffff',
@@ -1128,10 +1257,15 @@ export function LaunchGame({ onClose, onComplete }: LaunchGameProps) {
                 boxShadow: '0 0 15px rgba(56,189,248,0.3)',
               }}
             >
-              🔥 {isEs ? 'EMPUJE' : 'BOOST'}
+              [ {isEs ? 'EMPUJE / BOOST' : 'BOOST / THRUST'} ]
             </button>
           </div>
         </div>
+      )}
+
+      {/* Shuttle Fleet Historic Dossier Modal */}
+      {galleryOpen && (
+        <ShuttleGalleryModal onClose={() => setGalleryOpen(false)} lang={lang} />
       )}
     </div>
   );

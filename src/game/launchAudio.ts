@@ -1,10 +1,11 @@
 /**
- * Procedural Web Audio API sound generator for the First-Person Rocket Launch.
- * Zero external audio files required: synthesizes authentic engine rumble,
- * countdown beeps, aerodynamic sonic booms, stage separation clunks,
- * and orbital insertion victory tones directly through the audio hardware.
+ * Official NASA Launch Audio & Web Audio API Engine Synthesizer.
+ * Combines authentic NASA STS-135 Atlantis Mission Control launch audio
+ * with real-time physics-modulated engine rumble, sonic boom shockwaves,
+ * and staging pyrotechnics.
  */
 
+let officialAudio: HTMLAudioElement | null = null;
 let audioCtx: AudioContext | null = null;
 let engineNoiseNode: AudioBufferSourceNode | null = null;
 let engineFilterNode: BiquadFilterNode | null = null;
@@ -27,13 +28,39 @@ function getContext(): AudioContext | null {
   return audioCtx;
 }
 
+export function playOfficialLaunchAudio() {
+  try {
+    if (!officialAudio) {
+      officialAudio = new Audio('sfx/shuttle-launch-sts135.mp3');
+      officialAudio.volume = 0.9;
+    }
+    officialAudio.currentTime = 0;
+    officialAudio.play().catch(() => {
+      // browser autoplay policy fallback
+    });
+  } catch (err) {
+    // ignore
+  }
+}
+
+export function stopOfficialLaunchAudio() {
+  if (officialAudio) {
+    try {
+      officialAudio.pause();
+      officialAudio.currentTime = 0;
+    } catch {}
+  }
+}
+
 export function startRocketEngine() {
+  playOfficialLaunchAudio();
+
   const ctx = getContext();
   if (!ctx) return;
 
-  stopRocketEngine();
+  stopRocketEngineSynth();
 
-  // Create 2 seconds of pink/brown low-frequency noise buffer
+  // Create 2 seconds of brown/pink noise
   const bufferSize = ctx.sampleRate * 2;
   const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
   const data = noiseBuffer.getChannelData(0);
@@ -51,33 +78,30 @@ export function startRocketEngine() {
     b6 = white * 0.115926;
   }
 
-  // Brown noise source
   engineNoiseNode = ctx.createBufferSource();
   engineNoiseNode.buffer = noiseBuffer;
   engineNoiseNode.loop = true;
 
-  // Resonant low-pass filter (muffles or roars based on atmosphere/throttle)
   engineFilterNode = ctx.createBiquadFilter();
   engineFilterNode.type = 'lowpass';
-  engineFilterNode.frequency.setValueAtTime(260, ctx.currentTime);
-  engineFilterNode.Q.setValueAtTime(3.5, ctx.currentTime);
+  engineFilterNode.frequency.setValueAtTime(280, ctx.currentTime);
+  engineFilterNode.Q.setValueAtTime(3.0, ctx.currentTime);
 
   engineGainNode = ctx.createGain();
   engineGainNode.gain.setValueAtTime(0.01, ctx.currentTime);
-  engineGainNode.gain.linearRampToValueAtTime(0.45, ctx.currentTime + 1.2);
+  engineGainNode.gain.linearRampToValueAtTime(0.4, ctx.currentTime + 1.0);
 
-  // Sub-harmonic bass oscillator (42 Hz) for chest-rumble engine vibration
   subOscNode = ctx.createOscillator();
   subOscNode.type = 'sawtooth';
-  subOscNode.frequency.setValueAtTime(45, ctx.currentTime);
+  subOscNode.frequency.setValueAtTime(42, ctx.currentTime);
 
   subGainNode = ctx.createGain();
   subGainNode.gain.setValueAtTime(0.01, ctx.currentTime);
-  subGainNode.gain.linearRampToValueAtTime(0.25, ctx.currentTime + 1.2);
+  subGainNode.gain.linearRampToValueAtTime(0.22, ctx.currentTime + 1.0);
 
   const subFilter = ctx.createBiquadFilter();
   subFilter.type = 'lowpass';
-  subFilter.frequency.setValueAtTime(120, ctx.currentTime);
+  subFilter.frequency.setValueAtTime(110, ctx.currentTime);
 
   engineNoiseNode.connect(engineFilterNode);
   engineFilterNode.connect(engineGainNode);
@@ -96,20 +120,18 @@ export function updateEngineAcoustics(throttle: number, altitude: number, stage:
   if (!ctx || !engineFilterNode || !engineGainNode || !subGainNode) return;
 
   if (stage === 'orbit') {
-    // In space orbit with engines cut: silent vacuum
     engineGainNode.gain.setTargetAtTime(0, ctx.currentTime, 0.4);
     subGainNode.gain.setTargetAtTime(0, ctx.currentTime, 0.4);
     return;
   }
 
-  // Throttle modulates volume
-  const atmoDensity = Math.max(0.12, 1 - (altitude / 100));
-  const targetGain = Math.max(0.05, throttle * 0.45 * atmoDensity);
-  const targetFilterFreq = 160 + throttle * 400 * atmoDensity;
+  const atmoDensity = Math.max(0.1, 1 - altitude / 95);
+  const targetGain = Math.max(0.05, throttle * 0.4 * atmoDensity);
+  const targetFilterFreq = 160 + throttle * 420 * atmoDensity;
 
   engineGainNode.gain.setTargetAtTime(targetGain, ctx.currentTime, 0.1);
   engineFilterNode.frequency.setTargetAtTime(targetFilterFreq, ctx.currentTime, 0.1);
-  subGainNode.gain.setTargetAtTime(throttle * 0.22, ctx.currentTime, 0.1);
+  subGainNode.gain.setTargetAtTime(throttle * 0.2, ctx.currentTime, 0.1);
 }
 
 export function playCountdownBeep(high = false) {
@@ -149,12 +171,11 @@ export function playSonicBoom() {
 export function playStageSeparationSound() {
   const ctx = getContext();
   if (!ctx) return;
-  // Pyrotechnic explosive release bolt thump
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
   osc.type = 'sawtooth';
-  osc.frequency.setValueAtTime(80, ctx.currentTime);
-  osc.frequency.exponentialRampToValueAtTime(20, ctx.currentTime + 0.4);
+  osc.frequency.setValueAtTime(85, ctx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(22, ctx.currentTime + 0.4);
 
   gain.gain.setValueAtTime(0.65, ctx.currentTime);
   gain.gain.exponentialRampToValueAtTime(0.005, ctx.currentTime + 0.45);
@@ -169,7 +190,7 @@ export function playOrbitalInsertionChime() {
   const ctx = getContext();
   if (!ctx) return;
 
-  const notes = [523.25, 659.25, 783.99, 1046.50]; // C Major triumph chord
+  const notes = [523.25, 659.25, 783.99, 1046.50];
   notes.forEach((freq, idx) => {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
@@ -187,15 +208,20 @@ export function playOrbitalInsertionChime() {
   });
 }
 
-export function stopRocketEngine() {
+function stopRocketEngineSynth() {
   if (engineNoiseNode) {
-    try { engineNoiseNode.stop(); } catch { /* ignore */ }
+    try { engineNoiseNode.stop(); } catch {}
     engineNoiseNode.disconnect();
     engineNoiseNode = null;
   }
   if (subOscNode) {
-    try { subOscNode.stop(); } catch { /* ignore */ }
+    try { subOscNode.stop(); } catch {}
     subOscNode.disconnect();
     subOscNode = null;
   }
+}
+
+export function stopRocketEngine() {
+  stopOfficialLaunchAudio();
+  stopRocketEngineSynth();
 }
